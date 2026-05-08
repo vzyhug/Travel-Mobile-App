@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="facebook_app_id">1705279410485225</string>
+    
+    <string name="facebook_client_token">a968ecfe8289599df127457634575be5</string>
+    
+    <string name="fb_login_protocol_scheme">fb1705279410485225</string>
+    
+    <string name="app_name">Travel Application</string>
+</resources>
