@@ -22,15 +22,15 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // ID ứng dụng của bạn
         applicationId = "com.example.travel_application"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // sua thanh 23 de su dung google
-        minSdk = 23 //
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+
+        // SỬA TẠI ĐÂY: Dùng dấu bằng và gán trực tiếp số
+        minSdk = flutter.minSdkVersion.toInt()
+        targetSdk = 33
+
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {
