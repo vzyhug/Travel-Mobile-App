@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:travel_application/services/auth_service.dart';
+import 'package:travel_application/screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,6 +12,48 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
+  bool _isLoading = false;
+  final AuthService _authService = AuthService();
+
+  Future<void> _handleSocialLogin(
+    Future<dynamic> Function() loginMethod,
+    String provider,
+  ) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final user = await loginMethod();
+      if (user != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Đăng nhập $provider thành công!')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đăng nhập $provider thất bại hoặc đã bị hủy.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Đã xảy ra lỗi: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +283,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildSocialIcon(
+                          onTap: () => _handleSocialLogin(
+                            _authService.signInWithGoogle,
+                            'Google',
+                          ),
                           child: ShaderMask(
                             shaderCallback: (bounds) => const LinearGradient(
                               colors: [
@@ -263,6 +311,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(width: 20),
                         _buildSocialIcon(
+                          onTap: () => _handleSocialLogin(
+                            _authService.signInWithFacebook,
+                            'Facebook',
+                          ),
                           child: const Icon(
                             Icons.facebook,
                             color: Colors.black,
@@ -302,28 +354,40 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.4),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildSocialIcon({required Widget child}) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+  Widget _buildSocialIcon({required Widget child, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: child,
       ),
-      alignment: Alignment.center,
-      child: child,
     );
   }
 }
