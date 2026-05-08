@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "499375729614",
+    "project_id": "support-login-dcc84",
+    "storage_bucket": "support-login-dcc84.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:499375729614:android:d608876664d3493a8b999f",
+        "android_client_info": {
+          "package_name": "com.example.travel_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLRT6F412Tpz4ULVKAEZSpeWbTpqR9nVk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

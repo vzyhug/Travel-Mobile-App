@@ -136,7 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
-                                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                    _isPasswordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
                                     color: tealColor,
                                   ),
                                   onPressed: () {
@@ -265,14 +267,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             Icons.facebook,
                             color: Colors.black,
                             size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        _buildSocialIcon(
-                          child: const Icon(
-                            Icons.apple,
-                            color: Colors.black,
-                            size: 30,
                           ),
                         ),
                       ],
