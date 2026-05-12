@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travel_application/services/auth_service.dart';
+import 'package:travel_application/services/api_service.dart';
 import 'package:travel_application/screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,6 +15,63 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = false;
   bool _isLoading = false;
   final AuthService _authService = AuthService();
+  final ApiService _apiService = ApiService();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleNormalLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập email và mật khẩu')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final accounts = await _apiService.fetchAccounts();
+      final match = accounts.where((acc) => acc.email == email && acc.password == password).toList();
+      
+      if (match.isNotEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đăng nhập thành công!')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email hoặc mật khẩu không đúng.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Đã xảy ra lỗi: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   Future<void> _handleSocialLogin(
     Future<dynamic> Function() loginMethod,
@@ -140,9 +198,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: tealColor,
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            child: const TextField(
-                              style: TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
+                            child: TextField(
+                              controller: _emailController,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
                                 hintText: 'abc@gmail.com',
                                 hintStyle: TextStyle(color: Colors.white),
                                 prefixIcon: Icon(
@@ -166,6 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               border: Border.all(color: tealColor, width: 1.5),
                             ),
                             child: TextField(
+                              controller: _passwordController,
                               obscureText: !_isPasswordVisible,
                               style: const TextStyle(
                                 color: tealColor,
@@ -254,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             height: 54,
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: _handleNormalLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: tealColor,
                                 shape: RoundedRectangleBorder(
