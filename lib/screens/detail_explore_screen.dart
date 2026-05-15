@@ -13,7 +13,9 @@ class DetailExploreScreen extends StatelessWidget {
     const tealColor = Color(0xFF139CAE);
 
     // Xử lý ảnh nền chính: Lấy ảnh đầu tiên trong mảng urls, nếu rỗng dùng ảnh mặc định
-    String bgImageUrl = (destinationData['imageUrls'] != null && destinationData['imageUrls'].isNotEmpty)
+    String bgImageUrl =
+        (destinationData['imageUrls'] != null &&
+            destinationData['imageUrls'].isNotEmpty)
         ? destinationData['imageUrls'][0]
         : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80&w=800&auto=format&fit=crop'; // Ảnh mặc định
 
@@ -39,7 +41,10 @@ class DetailExploreScreen extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.black.withOpacity(0.3), Colors.transparent],
+                      colors: [
+                        Colors.black.withOpacity(0.3),
+                        Colors.transparent,
+                      ],
                       stops: const [0.0, 0.4],
                     ),
                   ),
@@ -71,9 +76,15 @@ class DetailExploreScreen extends StatelessWidget {
               height: MediaQuery.of(context).size.height * 0.60,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(40),
+                ),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  ),
                 ],
               ),
               child: SingleChildScrollView(
@@ -119,7 +130,9 @@ class DetailExploreScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           image: DecorationImage(
-                            image: NetworkImage(bgImageUrl), // Ảnh trong card nhỏ
+                            image: NetworkImage(
+                              bgImageUrl,
+                            ), // Ảnh trong card nhỏ
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -134,16 +147,27 @@ class DetailExploreScreen extends StatelessWidget {
                         Expanded(
                           child: Text(
                             destinationData['name'], // Tên khách sạn từ db.json
-                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 22),
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 22,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               rating.toString(),
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black54),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black54,
+                              ),
                             ),
                           ],
                         ),
@@ -155,8 +179,13 @@ class DetailExploreScreen extends StatelessWidget {
                     // YÊU CẦU 2: LẤY MÔ TẢ TỪ DB.JSON
                     // ==========================================
                     Text(
-                      destinationData['description'] ?? "Không tìm thấy mô tả chi tiết trong cơ sở dữ liệu.", // Text mô tả
-                      style: const TextStyle(fontSize: 16, color: Colors.black54, height: 1.6),
+                      destinationData['description'] ??
+                          "Không tìm thấy mô tả chi tiết trong cơ sở dữ liệu.", // Text mô tả
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                        height: 1.6,
+                      ),
                     ),
                     const SizedBox(height: 30),
                     const SizedBox(height: 20),
@@ -175,11 +204,26 @@ class DetailExploreScreen extends StatelessWidget {
         showUnselectedLabels: false,
         currentIndex: 1,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_filled, size: 28), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.location_on, size: 28), label: 'Explore'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded, size: 26), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite_rounded, size: 28), label: 'Wishlist'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_rounded, size: 28), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_filled, size: 28),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.location_on, size: 28),
+            label: 'Explore',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_rounded, size: 26),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_rounded, size: 28),
+            label: 'Wishlist',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded, size: 28),
+            label: 'Profile',
+          ),
         ],
       ),
     );
