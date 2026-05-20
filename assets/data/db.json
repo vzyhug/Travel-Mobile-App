@@ -1,0 +1,554 @@
+{
+  "hotels": [
+    {
+      "id": "h1",
+      "name": "Khách sạn Hoa Mai",
+      "address": "123 Đường Lê Lợi, Quận 1, TP.HCM",
+      "rating": 4.5,
+      "pricePerNight": 1200000,
+      "imageUrls": [
+        "https://example.com/h1_1.jpg",
+        "https://example.com/h1_2.jpg"
+      ],
+      "amenities": [
+        "Wi-Fi miễn phí",
+        "Bể bơi",
+        "Nhà hàng",
+        "Gym"
+      ],
+      "description": "Khách sạn sang trọng ngay trung tâm thành phố, view đẹp."
+    },
+    {
+      "id": "h2",
+      "name": "Resort Biển Xanh",
+      "address": "Lô 5, Khu du lịch Bãi Sau, Vũng Tàu",
+      "rating": 4.8,
+      "pricePerNight": 2100000,
+      "imageUrls": [
+        "https://example.com/h2_1.jpg"
+      ],
+      "amenities": [
+        "Wi-Fi",
+        "Bãi biển riêng",
+        "Spa",
+        "Hồ bơi vô cực"
+      ],
+      "description": "Nghỉ dưỡng cao cấp bên bờ biển."
+    },
+    {
+      "id": "h3",
+      "name": "Khách sạn Hoàng Anh",
+      "address": "45 Phố Cổ, Hà Nội",
+      "rating": 4.2,
+      "pricePerNight": 950000,
+      "imageUrls": [],
+      "amenities": [
+        "Wi-Fi miễn phí",
+        "Nhà hàng",
+        "Lễ tân 24/7"
+      ],
+      "description": "Khách sạn bình dân, gần phố đi bộ."
+    },
+    {
+      "id": "h4",
+      "name": "Seaside Resort Đà Nẵng",
+      "address": "Võ Nguyên Giáp, Quận Sơn Trà, Đà Nẵng",
+      "rating": 4.7,
+      "pricePerNight": 1850000,
+      "imageUrls": [],
+      "amenities": [
+        "Wi-Fi",
+        "Hồ bơi",
+        "Spa",
+        "Nhà hàng hải sản"
+      ],
+      "description": "Resort mặt biển, cách cầu Rồng 10 phút."
+    }
+  ],
+  "rooms": [
+    {
+      "id": "r1",
+      "hotelId": "h1",
+      "type": "Deluxe",
+      "capacity": 2,
+      "price": 1200000,
+      "available": true
+    },
+    {
+      "id": "r2",
+      "hotelId": "h1",
+      "type": "Suite",
+      "capacity": 4,
+      "price": 2200000,
+      "available": true
+    },
+    {
+      "id": "r3",
+      "hotelId": "h2",
+      "type": "Ocean View",
+      "capacity": 2,
+      "price": 2100000,
+      "available": true
+    },
+    {
+      "id": "r4",
+      "hotelId": "h2",
+      "type": "Family Room",
+      "capacity": 6,
+      "price": 3500000,
+      "available": false
+    },
+    {
+      "id": "r5",
+      "hotelId": "h3",
+      "type": "Standard",
+      "capacity": 2,
+      "price": 950000,
+      "available": true
+    },
+    {
+      "id": "r6",
+      "hotelId": "h4",
+      "type": "Deluxe Sea View",
+      "capacity": 2,
+      "price": 1850000,
+      "available": true
+    }
+  ],
+  "bookings": [
+    {
+      "id": "b1",
+      "hotelId": "h1",
+      "roomId": "r1",
+      "customerName": "Nguyễn Văn A",
+      "customerPhone": "0901234567",
+      "checkInDate": "2026-05-10",
+      "checkOutDate": "2026-05-13",
+      "totalPrice": 3600000,
+      "status": "confirmed",
+      "bookingDate": "2026-05-01T10:30:00Z"
+    },
+    {
+      "id": "b2",
+      "hotelId": "h2",
+      "roomId": "r3",
+      "customerName": "Trần Thị B",
+      "customerPhone": "0912345678",
+      "checkInDate": "2026-06-01",
+      "checkOutDate": "2026-06-05",
+      "totalPrice": 8400000,
+      "status": "pending",
+      "bookingDate": "2026-05-02T14:20:00Z"
+    }
+  ],
+  "wishlist": [
+    {
+      "id": "w1",
+      "userId": "user123",
+      "hotelId": "h2",
+      "addedAt": "2026-05-01T12:00:00Z"
+    },
+    {
+      "id": "w2",
+      "userId": "user123",
+      "hotelId": "h4",
+      "addedAt": "2026-05-02T09:15:00Z"
+    }
+  ],
+  "travel_plans": [
+    {
+      "id": "tp1",
+      "userId": "user123",
+      "title": "Khám phá Đà Nẵng 3 ngày",
+      "startDate": "2026-06-10",
+      "endDate": "2026-06-12",
+      "activities": [
+        {
+          "day": 1,
+          "time": "09:00",
+          "title": "Tham quan Bà Nà Hills",
+          "note": "Mang áo khoác nhẹ"
+        },
+        {
+          "day": 1,
+          "time": "18:00",
+          "title": "Ăn tối hải sản",
+          "note": "Quán Hải sản Bé Mặn"
+        },
+        {
+          "day": 2,
+          "time": "08:00",
+          "title": "Check-out khách sạn",
+          "note": "Trả phòng trước 12h"
+        }
+      ],
+      "hotelBookingId": "b2"
+    }
+  ],
+  "trips": [
+    {
+      "id": 1,
+      "name": "RedFish Lake",
+      "category": "Lakes",
+      "type": "Event",
+      "location": "Idaho",
+      "country": "USA",
+      "imageUrl": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=900",
+      "rating": 4.5,
+      "price": 40,
+      "duration": "1 day",
+      "description": "Redfish Lake is an alpine lake in Custer County, Idaho, just south of Stanley. It is famous for peaceful water, mountain views, camping areas, hiking trails and relaxing natural scenery.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=900",
+        "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=900",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900",
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900",
+        "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Maligne Lake",
+      "category": "Lakes",
+      "type": "Event",
+      "location": "Jasper",
+      "country": "Canada",
+      "imageUrl": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900",
+      "rating": 4.6,
+      "price": 45,
+      "duration": "1 day",
+      "description": "Maligne Lake is known for blue water, mountain views and boat trips. It is a beautiful destination for nature lovers, photographers and families.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900",
+        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=900",
+        "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=900",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Lake Tahoe",
+      "category": "Lakes",
+      "type": "Event",
+      "location": "California",
+      "country": "USA",
+      "imageUrl": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=900",
+      "rating": 4.7,
+      "price": 55,
+      "duration": "2 days 1 night",
+      "description": "Lake Tahoe is a large freshwater lake surrounded by mountains. It is popular for sightseeing, boating, hiking and winter activities.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=900",
+        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=900",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "West Lake Sunset",
+      "category": "Lakes",
+      "type": "Package",
+      "location": "Ha Noi",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1528127269322-539801943592?w=900",
+      "rating": 4.4,
+      "price": 30,
+      "duration": "Half day",
+      "description": "A relaxing city lake experience with sunset views, coffee stops, local food and photo corners around West Lake.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1528127269322-539801943592?w=900",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900",
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Blue Sea",
+      "category": "Sea",
+      "type": "Event",
+      "location": "Da Nang",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900",
+      "rating": 4.7,
+      "price": 45,
+      "duration": "1 day",
+      "description": "Blue Sea is a relaxing beach trip with clean sand, sunshine, fresh seafood and outdoor activities.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900",
+        "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=900",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Phu Quoc Island",
+      "category": "Sea",
+      "type": "Package",
+      "location": "Phu Quoc",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1540202404-a2f29016b523?w=900",
+      "rating": 4.8,
+      "price": 120,
+      "duration": "3 days 2 nights",
+      "description": "Phu Quoc Island package includes beach sightseeing, seafood, island hopping, snorkeling and relaxing resort time.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1540202404-a2f29016b523?w=900",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900",
+        "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=900"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Nha Trang Bay",
+      "category": "Sea",
+      "type": "Package",
+      "location": "Nha Trang",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=900",
+      "rating": 4.6,
+      "price": 95,
+      "duration": "2 days 1 night",
+      "description": "Nha Trang Bay is suitable for beach lovers, island tours, snorkeling, boat trips and local seafood experiences.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=900",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900",
+        "https://images.unsplash.com/photo-1540202404-a2f29016b523?w=900"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Mountainous Trip",
+      "category": "Mountain",
+      "type": "Event",
+      "location": "Seelisburg",
+      "country": "Switzerland",
+      "imageUrl": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900",
+      "rating": 4.5,
+      "price": 60,
+      "duration": "1 day",
+      "description": "A mountain trip with fresh air, beautiful views, hiking routes and peaceful villages. Suitable for group travel and outdoor activities.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900",
+        "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Sapa Cloud Hunt",
+      "category": "Mountain",
+      "type": "Package",
+      "location": "Sapa",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900",
+      "rating": 4.8,
+      "price": 85,
+      "duration": "2 days 1 night",
+      "description": "Sapa Cloud Hunt includes mountain sightseeing, local villages, terraced fields, cool weather and beautiful sunrise viewpoints.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900",
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900",
+        "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Ha Giang Loop",
+      "category": "Mountain",
+      "type": "Package",
+      "location": "Ha Giang",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1533130061792-64b345e4a833?w=900",
+      "rating": 4.9,
+      "price": 110,
+      "duration": "3 days 2 nights",
+      "description": "Ha Giang Loop is an adventurous mountain route with passes, valleys, local culture, viewpoints and unforgettable road trip moments.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1533130061792-64b345e4a833?w=900",
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900",
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Green Forest",
+      "category": "Forest",
+      "type": "Event",
+      "location": "Amazon",
+      "country": "Brazil",
+      "imageUrl": "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900",
+      "rating": 4.6,
+      "price": 50,
+      "duration": "1 day",
+      "description": "Green Forest is a nature trip with large trees, fresh air and quiet walking paths. It is great for people who love adventure and nature.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900",
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Cuc Phuong Forest",
+      "category": "Forest",
+      "type": "Package",
+      "location": "Ninh Binh",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1511497584788-876760111969?w=900",
+      "rating": 4.5,
+      "price": 65,
+      "duration": "2 days 1 night",
+      "description": "Cuc Phuong Forest is ideal for trekking, learning about nature, visiting conservation areas and enjoying quiet green scenery.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1511497584788-876760111969?w=900",
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900",
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Ba Na Hills",
+      "category": "Mountain",
+      "type": "Package",
+      "location": "Da Nang",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1528127269322-539801943592?w=900",
+      "rating": 4.4,
+      "price": 70,
+      "duration": "1 day",
+      "description": "Ba Na Hills package includes mountain views, cable car, European-style village areas, flower gardens and photo spots.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1528127269322-539801943592?w=900",
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900",
+        "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "King + Duke",
+      "category": "Restaurant",
+      "type": "Package",
+      "location": "Toronto",
+      "country": "Canada",
+      "imageUrl": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900",
+      "rating": 4.5,
+      "price": 120,
+      "duration": "3 days visit",
+      "description": "King + Duke is a city package for food, restaurant experience, local walking tour and relaxing urban travel.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900",
+        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900",
+        "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=900"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "Hoi An Ancient Town",
+      "category": "City",
+      "type": "Package",
+      "location": "Hoi An",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1528127269322-539801943592?w=900",
+      "rating": 4.9,
+      "price": 75,
+      "duration": "2 days 1 night",
+      "description": "Hoi An Ancient Town package includes lantern streets, local food, old houses, riverside walking and peaceful cultural experiences.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1528127269322-539801943592?w=900",
+        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Da Lat Flower City",
+      "category": "City",
+      "type": "Package",
+      "location": "Da Lat",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900",
+      "rating": 4.7,
+      "price": 80,
+      "duration": "2 days 1 night",
+      "description": "Da Lat Flower City offers cool weather, flower gardens, lakes, coffee shops, pine forests and romantic city viewpoints.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900",
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900",
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Mekong Delta Tour",
+      "category": "River",
+      "type": "Event",
+      "location": "Can Tho",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1519451241324-20b4ea2c4220?w=900",
+      "rating": 4.6,
+      "price": 55,
+      "duration": "1 day",
+      "description": "Mekong Delta Tour includes floating markets, river boat trips, tropical fruit gardens and local food experiences.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1519451241324-20b4ea2c4220?w=900",
+        "https://images.unsplash.com/photo-1528127269322-539801943592?w=900",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Phong Nha Cave",
+      "category": "Cave",
+      "type": "Package",
+      "location": "Quang Binh",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=900",
+      "rating": 4.8,
+      "price": 90,
+      "duration": "2 days 1 night",
+      "description": "Phong Nha Cave package is for adventure travelers who enjoy caves, rivers, national parks and natural discovery.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=900",
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900",
+        "https://images.unsplash.com/photo-1511497584788-876760111969?w=900"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Mui Ne Sand Dunes",
+      "category": "Desert",
+      "type": "Event",
+      "location": "Binh Thuan",
+      "country": "Vietnam",
+      "imageUrl": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900",
+      "rating": 4.4,
+      "price": 50,
+      "duration": "1 day",
+      "description": "Mui Ne Sand Dunes offers sunrise views, jeep tours, sandboarding activities and beautiful desert-like landscapes near the sea.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900",
+        "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=900"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Bangkok City Break",
+      "category": "City",
+      "type": "Package",
+      "location": "Bangkok",
+      "country": "Thailand",
+      "imageUrl": "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=900",
+      "rating": 4.6,
+      "price": 130,
+      "duration": "3 days 2 nights",
+      "description": "Bangkok City Break includes temples, markets, street food, shopping areas and night city experiences.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=900",
+        "https://images.unsplash.com/photo-1528127269322-539801943592?w=900",
+        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900"
+      ]
+    }
+  ],
+  "savedTrips": []
+}
