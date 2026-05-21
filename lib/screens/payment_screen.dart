@@ -1,0 +1,602 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../config/payment_config.dart';
+import '../helper/local_storage_service.dart';
+import '../models/local_booking_model.dart';
+import '../models/trip_model.dart';
+
+const Color paymentPrimaryColor = Color(0xFF059AA6);
+const Color paymentBackgroundColor = Color(0xFFF6FBFC);
+const Color paymentTextColor = Color(0xFF202124);
+
+class PaymentScreen extends StatefulWidget {
+  final TripModel trip;
+
+  const PaymentScreen({
+    super.key,
+    required this.trip,
+  });
+
+  @override
+  State<PaymentScreen> createState() => _PaymentScreenState();
+}
+
+class _PaymentScreenState extends State<PaymentScreen> {
+  final LocalStorageService _localStorageService = LocalStorageService();
+
+  bool isConfirming = false;
+  bool hasBooked = false;
+
+  TripModel get trip => widget.trip;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBookedStatus();
+  }
+
+  Future<void> _checkBookedStatus() async {
+    final booked = await _localStorageService.hasBookedTrip(widget.trip.id);
+    if (!mounted) return;
+    setState(() {
+      hasBooked = booked;
+    });
+  }
+
+  Future<void> _confirmBooking() async {
+    if (hasBooked || isConfirming) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tour này đã được booked rồi.')),
+      );
+      return;
+    }
+
+    setState(() {
+      isConfirming = true;
+    });
+
+    final booking = LocalBookingModel(
+      bookingId: DateTime.now().millisecondsSinceEpoch.toString(),
+      tripId: widget.trip.id,
+      tripName: widget.trip.name,
+      price: widget.trip.price,
+      location: widget.trip.location,
+      imageUrl: widget.trip.imageUrl,
+      bookedAt: DateTime.now(),
+    );
+
+    await _localStorageService.addBooking(booking);
+
+    if (!mounted) return;
+
+    setState(() {
+      isConfirming = false;
+      hasBooked = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Đã booked ${widget.trip.name}.')),
+    );
+
+    Navigator.pop(context, true);
+  }
+
+  String _formatCurrency(num value) {
+    final amount = value.toInt();
+    final text = amount.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
+    );
+    return '$textđ';
+  }
+
+  String _removeVietnameseAccent(String input) {
+    const vietnamese = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ'
+        'ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ';
+    const latin = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd'
+        'AAAAAAAAAAAAAAAAAEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYD';
+
+    var result = input;
+    for (var i = 0; i < vietnamese.length; i++) {
+      result = result.replaceAll(vietnamese[i], latin[i]);
+    }
+    return result;
+  }
+
+  String _buildTransferContent() {
+    final content = 'BOOK TRIP ${trip.id} ${trip.name}';
+    final noAccent = _removeVietnameseAccent(content).toUpperCase();
+    final cleaned = noAccent.replaceAll(RegExp(r'[^A-Z0-9 ]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    // Nội dung chuyển khoản nên ngắn để app ngân hàng đọc ổn định.
+    return cleaned.length > 35 ? cleaned.substring(0, 35).trim() : cleaned;
+  }
+
+  String _buildQrUrl() {
+    final amount = trip.price.toInt();
+    final addInfo = Uri.encodeComponent(_buildTransferContent());
+    final accountName = Uri.encodeComponent(PaymentConfig.accountName);
+
+    return 'https://img.vietqr.io/image/'
+        '${PaymentConfig.bankId}-${PaymentConfig.accountNo}-compact2.png'
+        '?amount=$amount'
+        '&addInfo=$addInfo'
+        '&accountName=$accountName';
+  }
+
+  ImageProvider _getTripImage() {
+    final image = trip.imageUrl.trim();
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      return NetworkImage(image);
+    }
+    return AssetImage(image);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final qrUrl = _buildQrUrl();
+    final transferContent = _buildTransferContent();
+    final amountText = _formatCurrency(trip.price);
+
+    return Scaffold(
+      backgroundColor: paymentBackgroundColor,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Stack(
+                children: [
+                  Container(
+                    height: 250,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: _getTripImage(),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 250,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.25),
+                          Colors.black.withOpacity(0.65),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 14,
+                    left: 14,
+                    child: _CircleButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onTap: () => Navigator.pop(context),
+                    ),
+                  ),
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    bottom: 22,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: Colors.white.withOpacity(0.35)),
+                          ),
+                          child: const Text(
+                            'Xác nhận thanh toán',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          trip.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, color: Colors.white70, size: 18),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                trip.location,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _PriceCard(amountText: amountText),
+                  const SizedBox(height: 16),
+                  _QrCard(qrUrl: qrUrl),
+                  const SizedBox(height: 16),
+                  _BankInfoCard(
+                    amountText: amountText,
+                    transferContent: transferContent,
+                    onCopyContent: () => _copyToClipboard(context, transferContent, 'Đã copy nội dung chuyển khoản'),
+                    onCopyAccount: () => _copyToClipboard(context, PaymentConfig.accountNo, 'Đã copy số tài khoản'),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    height: 52,
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _copyToClipboard(context, transferContent, 'Đã copy nội dung chuyển khoản'),
+                      icon: const Icon(Icons.copy_rounded),
+                      label: const Text(
+                        'Copy nội dung chuyển khoản',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: paymentPrimaryColor,
+                        side: const BorderSide(color: paymentPrimaryColor, width: 1.4),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 54,
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: hasBooked || isConfirming ? null : _confirmBooking,
+                      icon: isConfirming
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : Icon(hasBooked ? Icons.check_circle_rounded : Icons.verified_rounded),
+                      label: Text(
+                        hasBooked ? 'Đã booked tour này' : 'Tôi đã thanh toán / Hoàn tất booking',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hasBooked ? Colors.grey : paymentPrimaryColor,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey.shade400,
+                        disabledForegroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Sau khi chuyển khoản xong, bấm nút hoàn tất booking để tour xuất hiện trong mục Booked Tours.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      height: 1.4,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _copyToClipboard(BuildContext context, String text, String message) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _CircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(50),
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 19, color: Colors.black87),
+      ),
+    );
+  }
+}
+
+class _PriceCard extends StatelessWidget {
+  final String amountText;
+
+  const _PriceCard({required this.amountText});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: paymentPrimaryColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: paymentPrimaryColor.withOpacity(0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(Icons.payments_rounded, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tổng thanh toán',
+                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Đã lấy theo chuyến đi đã book',
+                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            amountText,
+            style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QrCard extends StatelessWidget {
+  final String qrUrl;
+
+  const _QrCard({required this.qrUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'Quét QR để thanh toán',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: paymentTextColor),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Mở app ngân hàng và quét mã bên dưới',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: paymentBackgroundColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Image.network(
+              qrUrl,
+              width: 245,
+              height: 245,
+              fit: BoxFit.contain,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const SizedBox(
+                  width: 245,
+                  height: 245,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return const SizedBox(
+                  width: 245,
+                  height: 245,
+                  child: Center(
+                    child: Text(
+                      'Không tải được mã QR\nVui lòng kiểm tra internet',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BankInfoCard extends StatelessWidget {
+  final String amountText;
+  final String transferContent;
+  final VoidCallback onCopyContent;
+  final VoidCallback onCopyAccount;
+
+  const _BankInfoCard({
+    required this.amountText,
+    required this.transferContent,
+    required this.onCopyContent,
+    required this.onCopyAccount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Thông tin chuyển khoản',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 14),
+          _InfoRow(title: 'Ngân hàng', value: PaymentConfig.bankId.toUpperCase()),
+          _InfoRow(title: 'Số tài khoản', value: PaymentConfig.accountNo, onCopy: onCopyAccount),
+          _InfoRow(title: 'Chủ tài khoản', value: PaymentConfig.accountName),
+          _InfoRow(title: 'Số tiền', value: amountText, isHighlight: true),
+          _InfoRow(title: 'Nội dung', value: transferContent, onCopy: onCopyContent),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String title;
+  final String value;
+  final bool isHighlight;
+  final VoidCallback? onCopy;
+
+  const _InfoRow({
+    required this.title,
+    required this.value,
+    this.isHighlight = false,
+    this.onCopy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: isHighlight ? const Color(0xFFE6F7F8) : const Color(0xffF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isHighlight ? paymentPrimaryColor : Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              title,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isHighlight ? paymentPrimaryColor : paymentTextColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          if (onCopy != null) ...[
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: onCopy,
+              borderRadius: BorderRadius.circular(20),
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(Icons.copy_rounded, size: 18, color: paymentPrimaryColor),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
