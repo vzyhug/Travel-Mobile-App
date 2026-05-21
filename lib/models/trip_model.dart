@@ -28,20 +28,35 @@ class TripModel {
   });
 
   factory TripModel.fromJson(Map<String, dynamic> json) {
+    final location = (json['location'] ?? '').toString();
+    final locationParts = location.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
+
     return TripModel(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      category: json['category'] ?? '',
-      type: json['type'] ?? '',
-      duration: json['duration'] ?? '',
-      location: json['location'] ?? '',
-      country: json['country'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
-      rating: (json['rating'] ?? 0).toDouble(),
-      price: json['price'] ?? 0,
-      description: json['description'] ?? '',
+      id: _toInt(json['id']),
+      name: (json['name'] ?? json['title'] ?? '').toString(),
+      category: (json['category'] ?? '').toString(),
+      type: (json['type'] ?? '').toString(),
+      duration: (json['duration'] ?? '').toString(),
+      location: location,
+      country: (json['country'] ?? (locationParts.isNotEmpty ? locationParts.last : '')).toString(),
+      imageUrl: (json['imageUrl'] ?? json['image'] ?? '').toString(),
+      rating: _toDouble(json['rating']),
+      price: _toInt(json['price']),
+      description: (json['description'] ?? '').toString(),
       gallery: List<String>.from(json['gallery'] ?? []),
     );
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   Map<String, dynamic> toJson() {

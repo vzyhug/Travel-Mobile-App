@@ -53,7 +53,11 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     final bookings = await getBookings();
 
-    bookings.add(booking);
+    final alreadyBooked = bookings.any((item) => item.tripId == booking.tripId);
+
+    if (!alreadyBooked) {
+      bookings.add(booking);
+    }
 
     final bookingStrings = bookings.map((booking) {
       return jsonEncode(booking.toJson());

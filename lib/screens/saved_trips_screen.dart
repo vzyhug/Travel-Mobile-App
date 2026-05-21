@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../helper/local_storage_service.dart';
 import '../helper/trip_service.dart';
-import '../models/local_booking_model.dart';
 import '../models/trip_model.dart';
 import 'trip_detail_screen.dart';
+import 'payment_screen.dart';
 //line 392
 const Color savedPrimaryColor = Color(0xFF059AA6);
 
@@ -69,6 +69,10 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
     return savedTrips.where((trip) => trip.type == 'Package').toList();
   }
 
+  List<TripModel> get bookedTrips {
+    return allTrips.where((trip) => bookedTripIds.contains(trip.id)).toList();
+  }
+
   Future<void> openDetail(TripModel trip) async {
     final result = await Navigator.push<bool>(
       context,
@@ -88,32 +92,25 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
   Future<void> bookTrip(TripModel trip) async {
     if (bookedTripIds.contains(trip.id)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bạn đã booking ${trip.name} rồi.')),
+        SnackBar(content: Text('${trip.name} đã được booked rồi.')),
       );
       return;
     }
 
-    final booking = LocalBookingModel(
-      bookingId: DateTime.now().millisecondsSinceEpoch.toString(),
-      tripId: trip.id,
-      tripName: trip.name,
-      price: trip.price,
-      location: trip.location,
-      imageUrl: trip.imageUrl,
-      bookedAt: DateTime.now(),
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentScreen(trip: trip),
+      ),
     );
-
-    await _localStorageService.addBooking(booking);
 
     if (!mounted) return;
 
-    setState(() {
-      bookedTripIds.add(trip.id);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Booking ${trip.name} thành công.')),
-    );
+    if (result == true) {
+      await loadSavedTrips();
+    } else {
+      await loadSavedTrips();
+    }
   }
 
   @override
@@ -153,17 +150,23 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
         children: [
           _buildAppBar(),
           const SizedBox(height: 26),
-          if (savedTrips.isEmpty) _buildEmptyState(),
+          if (savedTrips.isEmpty && bookedTrips.isEmpty) _buildEmptyState(),
           if (eventTrips.isNotEmpty) ...[
-            _buildSectionTitle('Events'),
+            _buildSectionTitle('Saved Events'),
             const SizedBox(height: 14),
             ...eventTrips.map(_buildSavedTripCard),
             const SizedBox(height: 22),
           ],
           if (packageTrips.isNotEmpty) ...[
-            _buildSectionTitle('Packages'),
+            _buildSectionTitle('Saved Packages'),
             const SizedBox(height: 14),
             ...packageTrips.map(_buildSavedTripCard),
+            const SizedBox(height: 22),
+          ],
+          if (bookedTrips.isNotEmpty) ...[
+            _buildBookedHeader(),
+            const SizedBox(height: 14),
+            ...bookedTrips.map(_buildBookedTripCard),
           ],
         ],
       ),
@@ -236,13 +239,151 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
     );
   }
 
+  Widget _buildBookedHeader() {
+    return Row(
+      children: [
+        const Expanded(
+          child: Text(
+            'Booked Tours',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE6F7F8),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '${bookedTrips.length} booked',
+            style: const TextStyle(
+              color: savedPrimaryColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBookedTripCard(TripModel trip) {
+    return GestureDetector(
+      onTap: () => openDetail(trip),
+      child: Container(
+        height: 116,
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF6FBFC),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE0F2F3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.035),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _networkImage(
+              trip.imageUrl,
+              width: 126,
+              height: 98,
+              radius: 14,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          trip.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.check_circle, color: savedPrimaryColor, size: 16),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, size: 13, color: Colors.grey.shade600),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: Text(
+                          trip.location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    trip.type == 'Package' && trip.duration.isNotEmpty
+                        ? '\$${trip.price} / ${trip.duration}'
+                        : '\$${trip.price} /Visit',
+                    style: const TextStyle(
+                      color: savedPrimaryColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: savedPrimaryColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Booked',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSavedTripCard(TripModel trip) {
     final bool isBooked = bookedTripIds.contains(trip.id);
 
     return GestureDetector(
       onTap: () => openDetail(trip),
       child: Container(
-        height: 106,
+        height: 116,
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -261,12 +402,13 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
             _networkImage(
               trip.imageUrl,
               width: 126,
-              height: 88,
+              height: 98,
               radius: 14,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -320,14 +462,16 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 8),
                   SizedBox(
                     height: 24,
                     child: ElevatedButton(
-                      onPressed: () => bookTrip(trip),
+                      onPressed: isBooked ? null : () => bookTrip(trip),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isBooked ? Colors.grey : savedPrimaryColor,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey.shade400,
+                        disabledForegroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         shape: RoundedRectangleBorder(

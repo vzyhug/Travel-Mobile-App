@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../helper/local_storage_service.dart';
-import '../models/local_booking_model.dart';
 import '../models/trip_model.dart';
+import 'payment_screen.dart';
 
 const Color primaryColor = Color(0xFF059AA6);
 
@@ -58,30 +58,22 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       return;
     }
 
-    setState(() {
-      isBooking = true;
-    });
-
-    final booking = LocalBookingModel(
-      bookingId: DateTime.now().millisecondsSinceEpoch.toString(),
-      tripId: widget.trip.id,
-      tripName: widget.trip.name,
-      price: widget.trip.price,
-      location: widget.trip.location,
-      imageUrl: widget.trip.imageUrl,
-      bookedAt: DateTime.now(),
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentScreen(trip: widget.trip),
+      ),
     );
-
-    await _localStorageService.addBooking(booking);
 
     if (!mounted) return;
 
-    setState(() {
-      isBooking = false;
-      hasBooked = true;
-    });
-
-    showBookingSuccess();
+    if (result == true) {
+      setState(() {
+        hasBooked = true;
+      });
+    } else {
+      await checkBookedStatus();
+    }
   }
 
   void showAlreadyBookedMessage() {

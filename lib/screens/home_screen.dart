@@ -26,12 +26,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<TripModel> trips = [];
   Set<int> favoriteTripIds = {};
 
-  String selectedCategory = 'Lakes';
+  String selectedCategory = 'All';
   int selectedBottomIndex = 0;
   bool showAllTopTrips = false;
   bool showAllGroupTrips = false;
 
-  final List<String> categories = ['Lakes', 'Sea', 'Mountain', 'Forest'];
+  final List<String> categories = ['All', 'Lakes', 'Sea', 'Mountain', 'Forest'];
 
   @override
   void initState() {
@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final keyword = _searchController.text.trim().toLowerCase();
 
     return trips.where((trip) {
-      final matchCategory = trip.category == selectedCategory;
+      final matchCategory = selectedCategory == 'All' || trip.category == selectedCategory;
 
       final matchSearch = trip.name.toLowerCase().contains(keyword) ||
           trip.location.toLowerCase().contains(keyword) ||
@@ -85,6 +85,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<TripModel> get groupTrips {
     return trips.where((trip) => trip.category == 'Mountain').toList();
+  }
+
+  bool get hasActiveFilter {
+    return selectedCategory != 'All' || _searchController.text.trim().isNotEmpty;
+  }
+
+  void clearFilters() {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      selectedCategory = 'All';
+      _searchController.clear();
+      showAllTopTrips = false;
+    });
   }
 
   Future<void> toggleFavorite(int tripId) async {
@@ -171,6 +184,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildSectionTitle('Categories'),
           const SizedBox(height: 12),
           _buildCategories(),
+          if (hasActiveFilter) ...[
+            const SizedBox(height: 10),
+            _buildClearFilterChip(),
+          ],
           const SizedBox(height: 22),
           _buildSectionTitle(
             'Top Trips',
@@ -300,15 +317,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(width: 10),
         GestureDetector(
-          onTap: showFilterMessage,
+          onTap: hasActiveFilter ? clearFilters : showFilterMessage,
           child: Container(
             height: 48,
             width: 48,
             decoration: BoxDecoration(
-              color: primaryColor,
+              color: hasActiveFilter ? Colors.redAccent : primaryColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.tune, color: Colors.white),
+            child: Icon(
+              hasActiveFilter ? Icons.close : Icons.tune,
+              color: Colors.white,
+            ),
           ),
         ),
       ],
@@ -319,6 +339,43 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Filter theo category và search đã hoạt động.'),
+      ),
+    );
+  }
+
+  Widget _buildClearFilterChip() {
+    final label = selectedCategory == 'All'
+        ? 'Đang tìm kiếm'
+        : 'Đang lọc: $selectedCategory';
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: InkWell(
+        onTap: clearFilters,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primaryColor.withOpacity(0.25)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: primaryColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(Icons.close, size: 16, color: primaryColor),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -407,6 +464,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   IconData _categoryIcon(String category) {
     switch (category) {
+      case 'All':
+        return Icons.apps;
       case 'Sea':
         return Icons.water;
       case 'Mountain':
