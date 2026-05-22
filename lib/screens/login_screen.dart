@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:travel_application/services/auth_service.dart';
 import 'package:travel_application/services/api_service.dart';
 import 'package:travel_application/screens/home_screen.dart';
+import 'package:travel_application/helper/local_storage_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   final AuthService _authService = AuthService();
   final ApiService _apiService = ApiService();
+  final LocalStorageService _localStorageService = LocalStorageService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -46,13 +49,21 @@ class _LoginScreenState extends State<LoginScreen> {
       final match = accounts.where((acc) => acc.email == email && acc.password == password).toList();
       
       if (match.isNotEmpty && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đăng nhập thành công!')),
+        final account = match.first;
+        await _localStorageService.saveUserSession(
+          email: account.email,
+          name: account.name,
         );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đăng nhập thành công!')),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Email hoặc mật khẩu không đúng.')),
@@ -84,13 +95,26 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final user = await loginMethod();
       if (user != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đăng nhập $provider thành công!')),
+        String name = 'Social User';
+        String email = 'social@gmail.com';
+        if (user is UserCredential && user.user != null) {
+          name = user.user!.displayName ?? 'Social User';
+          email = user.user!.email ?? 'social@gmail.com';
+        }
+        await _localStorageService.saveUserSession(
+          email: email,
+          name: name,
         );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Đăng nhập $provider thành công!')),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -5,6 +5,11 @@ import '../helper/trip_service.dart';
 import '../models/trip_model.dart';
 import 'trip_detail_screen.dart';
 import 'payment_screen.dart';
+import 'home_screen.dart';
+import 'explore_screen.dart';
+import 'chat_screen.dart';
+import 'profile_screen.dart';
+import '../helper/navigation_helper.dart';
 //line 392
 const Color savedPrimaryColor = Color(0xFF059AA6);
 
@@ -523,22 +528,18 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
           final selected = index == 3;
 
           return GestureDetector(
-            onTap: () async {
-              if (index == 0) {
-                Navigator.pop(context, true);
-                return;
-              }
+            onTap: () {
+              if (selected) return;
 
-              if (index == 3) {
-                await loadSavedTrips();
-                return;
+              if (index == 0) {
+                navigateToTab(context, const HomeScreen());
+              } else if (index == 1) {
+                navigateToTab(context, const ExploreScreen());
+              } else if (index == 2) {
+                navigateToTab(context, const ChatScreen());
+              } else if (index == 4) {
+                navigateToTab(context, const ProfileScreen());
               }
-//Todo..
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Màn hình này chưa được triển khai trong phần Home/Detail/Saved Trips.'),
-                ),
-              );
             },
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

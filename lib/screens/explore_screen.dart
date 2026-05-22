@@ -3,8 +3,15 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 import 'detail_explore_screen.dart';
+import 'home_screen.dart';
+import 'chat_screen.dart';
+import 'saved_trips_screen.dart';
+import 'profile_screen.dart';
+import '../helper/navigation_helper.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -22,54 +29,45 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   // Danh sách sẽ chứa 3 địa điểm ngẫu nhiên
   List<Map<String, dynamic>> randomHotels = [];
-
-  // Mô phỏng dữ liệu đọc từ db.json
-  final List<Map<String, dynamic>> allHotels = [
-    {
-      "id": "h1",
-      "name": "Khách sạn Hoa Mai",
-      "address": "123 Đường Lê Lợi, Quận 1, TP.HCM",
-      "lat": 10.7732, "lng": 106.7005,
-      "imageUrls": ["https://images.unsplash.com/photo-1517840901100-8179e982acb7"],
-      "description": "Khách sạn sang trọng ngay trung tâm thành phố, view đẹp." // Đã thêm
-    },
-    {
-      "id": "h2",
-      "name": "Resort Biển Xanh",
-      "address": "Lô 5, Khu du lịch Bãi Sau, Vũng Tàu",
-      "lat": 10.3459, "lng": 107.0842,
-      "imageUrls": ["https://images.unsplash.com/photo-1499793983690-e29da59ef1c2"],
-      "description": "Nghỉ dưỡng cao cấp bên bờ biển." // Đã thêm
-    },
-    {
-      "id": "h3",
-      "name": "Khách sạn Hoàng Anh",
-      "address": "45 Phố Cổ, Hà Nội",
-      "lat": 21.0328, "lng": 105.8524,
-      "imageUrls": [],
-      "description": "Khách sạn bình dân, gần phố đi bộ." // Đã thêm
-    },
-    {
-      "id": "h4",
-      "name": "Seaside Resort Đà Nẵng",
-      "address": "Võ Nguyên Giáp, Sơn Trà, Đà Nẵng",
-      "lat": 16.0544, "lng": 108.2022,
-      "imageUrls": [],
-      "description": "Resort mặt biển, cách cầu Rồng 10 phút." // Đã thêm
-    }
-  ];
+  List<Map<String, dynamic>> allHotels = [];
+  bool _isLoadingHotels = true;
+  String? _errorMsg;
 
   @override
   void initState() {
     super.initState();
-    _loadRandomHotels();
+    _fetchAndLoadHotels();
   }
 
-  void _loadRandomHotels() {
-    final random = Random();
-    List<Map<String, dynamic>> shuffled = List.from(allHotels);
-    shuffled.shuffle(random);
-    randomHotels = shuffled.take(3).toList();
+  Future<void> _fetchAndLoadHotels() async {
+    try {
+      final response = await http.get(Uri.parse('https://my-json-server.typicode.com/vzyhug/data-travel-hotels/hotels'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final List<Map<String, dynamic>> hotels = data.map((e) => Map<String, dynamic>.from(e)).toList();
+        if (mounted) {
+          setState(() {
+            allHotels = hotels;
+            if (allHotels.isNotEmpty) {
+              final random = Random();
+              List<Map<String, dynamic>> shuffled = List.from(allHotels);
+              shuffled.shuffle(random);
+              randomHotels = shuffled.take(3).toList();
+            }
+            _isLoadingHotels = false;
+          });
+        }
+      } else {
+        throw Exception('Server returned status: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMsg = e.toString();
+          _isLoadingHotels = false;
+        });
+      }
+    }
   }
 
   Future<void> _launchMaps(String address, double lat, double lng) async {
@@ -92,7 +90,58 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (randomHotels.isEmpty) return const SizedBox();
+    if (_isLoadingHotels) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: Center(
+          child: CircularProgressIndicator(color: tealColor),
+        ),
+      );
+    }
+
+    if (_errorMsg != null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'Lỗi tải dữ liệu khách sạn: $_errorMsg',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _isLoadingHotels = true;
+                      _errorMsg = null;
+                    });
+                    _fetchAndLoadHotels();
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: tealColor),
+                  child: const Text('Thử lại', style: TextStyle(color: Colors.white)),
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (randomHotels.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: const Center(
+          child: Text('Không có dữ liệu khách sạn'),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -319,6 +368,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
       showSelectedLabels: false,
       showUnselectedLabels: false,
       currentIndex: 1,
+      onTap: (index) {
+        if (index == 1) return;
+        if (index == 0) {
+          navigateToTab(context, const HomeScreen());
+        } else if (index == 2) {
+          navigateToTab(context, const ChatScreen());
+        } else if (index == 3) {
+          navigateToTab(context, const SavedTripsScreen());
+        } else if (index == 4) {
+          navigateToTab(context, const ProfileScreen());
+        }
+      },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home_filled, size: 28), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.location_on, size: 28), label: 'Explore'),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
-//import 'detail_screen.dart';
+import 'payment_screen.dart';
+import '../models/trip_model.dart';
 
 class DetailExploreScreen extends StatelessWidget {
   final Map<String, dynamic> destinationData;
@@ -96,31 +96,25 @@ class DetailExploreScreen extends StatelessWidget {
 
                     GestureDetector(
                       onTap: () {
-                        // Chuyển sang một màn hình Scaffold tạm thời để test
+                        final trip = TripModel(
+                          id: int.tryParse(destinationData['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '') ?? 999,
+                          name: destinationData['name'] ?? '',
+                          location: destinationData['address'] ?? '',
+                          country: 'Việt Nam',
+                          imageUrl: bgImageUrl,
+                          price: (destinationData['price'] ?? 1500000).toDouble(),
+                          rating: (destinationData['rating'] ?? 4.5).toDouble(),
+                          category: 'Explore',
+                          description: destinationData['description'] ?? '',
+                          type: 'Explore',
+                          duration: '1 ngày',
+                          gallery: List<String>.from(destinationData['imageUrls'] ?? []),
+                        );
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => Scaffold(
-                              appBar: AppBar(
-                                title: const Text('Màn hình Test'),
-                                backgroundColor: const Color(0xFF139CAE),
-                                foregroundColor: Colors.white,
-                              ),
-                              body: Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20.0),
-                                  child: Text(
-                                    'Khi ghép code xong, bấm vào đây sẽ chuyển sang trang thanh toán của:\n\n"${destinationData['name']}"',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            builder: (context) => PaymentScreen(trip: trip),
                           ),
                         );
                       },
@@ -187,42 +181,57 @@ class DetailExploreScreen extends StatelessWidget {
                         height: 1.6,
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 54,
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: tealColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        onPressed: () {
+                          final trip = TripModel(
+                            id: int.tryParse(destinationData['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '') ?? 999,
+                            name: destinationData['name'] ?? '',
+                            location: destinationData['address'] ?? '',
+                            country: 'Việt Nam',
+                            imageUrl: bgImageUrl,
+                            price: (destinationData['price'] ?? 1500000).toDouble(),
+                            rating: (destinationData['rating'] ?? 4.5).toDouble(),
+                            category: 'Explore',
+                            description: destinationData['description'] ?? '',
+                            type: 'Explore',
+                            duration: '1 ngày',
+                            gallery: List<String>.from(destinationData['imageUrls'] ?? []),
+                          );
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PaymentScreen(trip: trip),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.shopping_bag_outlined),
+                        label: const Text(
+                          'Đặt Tour Ngay',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: tealColor,
-        unselectedItemColor: Colors.grey[400],
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        currentIndex: 1,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_filled, size: 28),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.location_on, size: 28),
-            label: 'Explore',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_rounded, size: 26),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_rounded, size: 28),
-            label: 'Wishlist',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded, size: 28),
-            label: 'Profile',
           ),
         ],
       ),
