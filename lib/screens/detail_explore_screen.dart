@@ -1,26 +1,68 @@
 import 'package:flutter/material.dart';
-import 'payment_screen.dart';
-import '../models/trip_model.dart';
+import '../models/hotel_model.dart';
+import 'home_screen.dart';
+import 'saved_trips_screen.dart';
+import '../helper/local_storage_service.dart';
+import 'room_selection_screen.dart';
 
-class DetailExploreScreen extends StatelessWidget {
-  final Map<String, dynamic> destinationData;
+class DetailExploreScreen extends StatefulWidget {
+  final HotelModel hotel;
 
-  const DetailExploreScreen({super.key, required this.destinationData});
+  const DetailExploreScreen({super.key, required this.hotel});
+
+  @override
+  State<DetailExploreScreen> createState() => _DetailExploreScreenState();
+}
+
+class _DetailExploreScreenState extends State<DetailExploreScreen> {
+  final Color tealColor = const Color(0xFF139CAE);
+  bool isFavorite = false;
+  final LocalStorageService _localStorageService = LocalStorageService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFavoriteStatus();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final status = await _localStorageService.isFavoriteHotel(widget.hotel.id);
+    if (mounted) {
+      setState(() {
+        isFavorite = status;
+      });
+    }
+  }
+
+  Future<void> toggleFavorite() async {
+    setState(() {
+      isFavorite = !isFavorite;
+    });
+    await _localStorageService.toggleFavoriteHotel(widget.hotel.id);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isFavorite ? 'Đã thêm vào Wishlist' : 'Đã xóa khỏi Wishlist'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void goToRoomSelection() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RoomSelectionScreen(hotel: widget.hotel),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Màu teal đồng nhất lấy từ LoginScreen
-    const tealColor = Color(0xFF139CAE);
-
-    // Xử lý ảnh nền chính: Lấy ảnh đầu tiên trong mảng urls, nếu rỗng dùng ảnh mặc định
-    String bgImageUrl =
-        (destinationData['imageUrls'] != null &&
-            destinationData['imageUrls'].isNotEmpty)
-        ? destinationData['imageUrls'][0]
-        : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80&w=800&auto=format&fit=crop'; // Ảnh mặc định
-
-    // Rating giả lập nếu không có (hoặc lấy từ db.json nếu bạn bổ sung)
-    double rating = destinationData['rating'] ?? 4.5;
+    String bgImageUrl = widget.hotel.imageUrls.isNotEmpty
+        ? widget.hotel.imageUrls[0]
+        : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80&w=800&auto=format&fit=crop';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -35,16 +77,12 @@ class DetailExploreScreen extends StatelessWidget {
                   width: double.infinity,
                   height: double.infinity,
                 ),
-                // Lớp gradient đen mờ để text nổi lên (Nên có để canh chuẩn UI)
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.3),
-                        Colors.transparent,
-                      ],
+                      colors: [Colors.black.withOpacity(0.4), Colors.transparent],
                       stops: const [0.0, 0.4],
                     ),
                   ),
@@ -55,17 +93,12 @@ class DetailExploreScreen extends StatelessWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: CircleAvatar(
-                  backgroundColor: Colors.white.withOpacity(0.8),
-                  radius: 22,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                    onPressed: () {
-                      Navigator.pop(context); // Lệnh trở về màn hình trước
-                    },
-                  ),
+              child: CircleAvatar(
+                backgroundColor: Colors.white.withOpacity(0.8),
+                radius: 22,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
             ),
@@ -74,165 +107,85 @@ class DetailExploreScreen extends StatelessWidget {
             alignment: Alignment.bottomCenter,
             child: Container(
               height: MediaQuery.of(context).size.height * 0.60,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(40),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
+                borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
               ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 10),
-
-                    GestureDetector(
-                      onTap: () {
-                        final trip = TripModel(
-                          id: int.tryParse(destinationData['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '') ?? 999,
-                          name: destinationData['name'] ?? '',
-                          location: destinationData['address'] ?? '',
-                          country: 'Việt Nam',
-                          imageUrl: bgImageUrl,
-                          price: (destinationData['price'] ?? 1500000).toDouble(),
-                          rating: (destinationData['rating'] ?? 4.5).toDouble(),
-                          category: 'Explore',
-                          description: destinationData['description'] ?? '',
-                          type: 'Explore',
-                          duration: '1 ngày',
-                          gallery: List<String>.from(destinationData['imageUrls'] ?? []),
-                        );
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PaymentScreen(trip: trip),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 30, 24, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: Text(widget.hotel.name, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold))),
+                              Row(children: [const Icon(Icons.star, color: Colors.amber), Text(widget.hotel.rating.toString(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))]),
+                            ],
                           ),
-                        );
-                      },
-                      child: Container(
-                        height: 180,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          image: DecorationImage(
-                            image: NetworkImage(
-                              bgImageUrl,
-                            ), // Ảnh trong card nhỏ
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                          const SizedBox(height: 8),
+                          Row(children: [Icon(Icons.location_on, color: Colors.grey.shade600, size: 20), const SizedBox(width: 6), Expanded(child: Text(widget.hotel.address, style: TextStyle(color: Colors.grey.shade600, fontSize: 15)))]),
+                          const SizedBox(height: 24),
+                          const Text("Tiện ích", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          Wrap(spacing: 10, runSpacing: 10, children: widget.hotel.amenities.map((a) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), decoration: BoxDecoration(color: tealColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text(a, style: TextStyle(color: tealColor, fontWeight: FontWeight.w600)))).toList()),
+                          const SizedBox(height: 24),
+                          const Text("Mô tả", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Text(widget.hotel.description, style: const TextStyle(fontSize: 15, color: Colors.black54, height: 1.6)),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Tên khách sạn và Đánh giá sao
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                    child: Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            destinationData['name'], // Tên khách sạn từ db.json
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
+                          child: SizedBox(
+                            height: 54,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: tealColor, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                              onPressed: goToRoomSelection,
+                              child: Text('Book Now | ${widget.hotel.pricePerNight.toInt()}đ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                             ),
                           ),
                         ),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              rating.toString(),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: toggleFavorite,
+                          child: Container(
+                            height: 54, width: 54, decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), shape: BoxShape.circle),
+                            child: Icon(isFavorite ? Icons.favorite : Icons.favorite_border, color: isFavorite ? Colors.redAccent : Colors.grey, size: 28),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // ==========================================
-                    // YÊU CẦU 2: LẤY MÔ TẢ TỪ DB.JSON
-                    // ==========================================
-                    Text(
-                      destinationData['description'] ??
-                          "Không tìm thấy mô tả chi tiết trong cơ sở dữ liệu.", // Text mô tả
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black54,
-                        height: 1.6,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 54,
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: tealColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        onPressed: () {
-                          final trip = TripModel(
-                            id: int.tryParse(destinationData['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '') ?? 999,
-                            name: destinationData['name'] ?? '',
-                            location: destinationData['address'] ?? '',
-                            country: 'Việt Nam',
-                            imageUrl: bgImageUrl,
-                            price: (destinationData['price'] ?? 1500000).toDouble(),
-                            rating: (destinationData['rating'] ?? 4.5).toDouble(),
-                            category: 'Explore',
-                            description: destinationData['description'] ?? '',
-                            type: 'Explore',
-                            duration: '1 ngày',
-                            gallery: List<String>.from(destinationData['imageUrls'] ?? []),
-                          );
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PaymentScreen(trip: trip),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.shopping_bag_outlined),
-                        label: const Text(
-                          'Đặt Tour Ngay',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
+        ],
+      ),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 14, offset: const Offset(0, -4))]),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          IconButton(onPressed: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (r) => false), icon: const Icon(Icons.home, color: Colors.grey)),
+          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.location_on, color: Color(0xFF139CAE))),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.chat_bubble, color: Colors.grey)),
+          IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedTripsScreen())), icon: const Icon(Icons.favorite, color: Colors.grey)),
+          const Icon(Icons.person, color: Colors.grey),
         ],
       ),
     );

@@ -4,31 +4,32 @@ import 'package:flutter/services.dart';
 import '../config/payment_config.dart';
 import '../helper/local_storage_service.dart';
 import '../models/local_booking_model.dart';
-import '../models/trip_model.dart';
+import '../models/hotel_model.dart';
+import '../models/room_model.dart';
 
 const Color paymentPrimaryColor = Color(0xFF059AA6);
 const Color paymentBackgroundColor = Color(0xFFF6FBFC);
 const Color paymentTextColor = Color(0xFF202124);
 
-class PaymentScreen extends StatefulWidget {
-  final TripModel trip;
+class HotelPaymentScreen extends StatefulWidget {
+  final HotelModel hotel;
+  final RoomModel room;
 
-  const PaymentScreen({
+  const HotelPaymentScreen({
     super.key,
-    required this.trip,
+    required this.hotel,
+    required this.room,
   });
 
   @override
-  State<PaymentScreen> createState() => _PaymentScreenState();
+  State<HotelPaymentScreen> createState() => _HotelPaymentScreenState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> {
+class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
   final LocalStorageService _localStorageService = LocalStorageService();
 
   bool isConfirming = false;
   bool hasBooked = false;
-
-  TripModel get trip => widget.trip;
 
   @override
   void initState() {
@@ -37,7 +38,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _checkBookedStatus() async {
-    final booked = await _localStorageService.hasBookedTrip(widget.trip.id);
+    // Sử dụng hàm hasBookedHotel chuyên dụng mà chúng ta đã viết ở bước trước
+    final booked = await _localStorageService.hasBookedHotel(widget.hotel.id);
     if (!mounted) return;
     setState(() {
       hasBooked = booked;
@@ -47,7 +49,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> _confirmBooking() async {
     if (hasBooked || isConfirming) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tour này đã được booked rồi.')),
+        const SnackBar(content: Text('Khách sạn này đã được booked rồi.')),
       );
       return;
     }
@@ -56,13 +58,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
       isConfirming = true;
     });
 
+    // Tạo hóa đơn lưu vào LocalStorage
     final booking = LocalBookingModel(
       bookingId: DateTime.now().millisecondsSinceEpoch.toString(),
-      tripId: widget.trip.id.toString(),
-      tripName: widget.trip.name,
-      price: widget.trip.price.toDouble(),
-      location: widget.trip.location,
-      imageUrl: widget.trip.imageUrl,
+      tripId: widget.hotel.id,
+      // Ghép tên khách sạn và tên phòng để hiển thị cho rõ ràng
+      tripName: '${widget.hotel.name} (${widget.room.type})',
+      price: widget.room.price,
+      location: widget.hotel.address,
+      imageUrl: widget.hotel.imageUrls.isNotEmpty ? widget.hotel.imageUrls[0] : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80',
       bookedAt: DateTime.now(),
     );
 
@@ -76,9 +80,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã booked ${widget.trip.name}.')),
+      SnackBar(content: Text('Đã hoàn tất đặt phòng tại ${widget.hotel.name}.')),
     );
 
+    // Trả về trang trước đó
     Navigator.pop(context, true);
   }
 
@@ -86,7 +91,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final amount = value.toInt();
     final text = amount.toString().replaceAllMapped(
       RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-      (match) => '${match[1]}.',
+          (match) => '${match[1]}.',
     );
     return '$textđ';
   }
@@ -105,16 +110,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   String _buildTransferContent() {
-    final content = 'BOOK TRIP ${trip.id} ${trip.name}';
+    // Đổi cú pháp mã chuyển khoản sang cho Hotel
+    final content = 'BOOK HOTEL ${widget.hotel.id} ${widget.room.id}';
     final noAccent = _removeVietnameseAccent(content).toUpperCase();
     final cleaned = noAccent.replaceAll(RegExp(r'[^A-Z0-9 ]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
-
-    // Nội dung chuyển khoản nên ngắn để app ngân hàng đọc ổn định.
     return cleaned.length > 35 ? cleaned.substring(0, 35).trim() : cleaned;
   }
 
   String _buildQrUrl() {
-    final amount = trip.price.toInt();
+    final amount = widget.room.price.toInt(); // Lấy giá của Room
     final addInfo = Uri.encodeComponent(_buildTransferContent());
     final accountName = Uri.encodeComponent(PaymentConfig.accountName);
 
@@ -125,19 +129,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
         '&accountName=$accountName';
   }
 
-  ImageProvider _getTripImage() {
-    final image = trip.imageUrl.trim();
+  ImageProvider _getHotelImage() {
+    final image = widget.hotel.imageUrls.isNotEmpty ? widget.hotel.imageUrls[0].trim() : '';
     if (image.startsWith('http://') || image.startsWith('https://')) {
       return NetworkImage(image);
     }
-    return AssetImage(image);
+    return const NetworkImage('https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80');
   }
 
   @override
   Widget build(BuildContext context) {
     final qrUrl = _buildQrUrl();
     final transferContent = _buildTransferContent();
-    final amountText = _formatCurrency(trip.price);
+    final amountText = _formatCurrency(widget.room.price);
 
     return Scaffold(
       backgroundColor: paymentBackgroundColor,
@@ -152,7 +156,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: _getTripImage(),
+                        image: _getHotelImage(),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -192,9 +196,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(color: Colors.white.withOpacity(0.35)),
                           ),
-                          child: const Text(
-                            'Xác nhận thanh toán',
-                            style: TextStyle(
+                          child: Text(
+                            'Đặt phòng: ${widget.room.type}', // Hiển thị tên loại phòng
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
@@ -203,7 +207,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          trip.name,
+                          widget.hotel.name,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -220,7 +224,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                trip.location,
+                                widget.hotel.address,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -278,13 +282,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       onPressed: hasBooked || isConfirming ? null : _confirmBooking,
                       icon: isConfirming
                           ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
                           : Icon(hasBooked ? Icons.check_circle_rounded : Icons.verified_rounded),
                       label: Text(
-                        hasBooked ? 'Đã booked tour này' : 'Tôi đã thanh toán / Hoàn tất booking',
+                        hasBooked ? 'Khách sạn này đã được Book' : 'Tôi đã thanh toán / Hoàn tất booking',
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -299,7 +303,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Sau khi chuyển khoản xong, bấm nút hoàn tất booking để tour xuất hiện trong mục Booked Tours.',
+                    'Sau khi chuyển khoản xong, bấm nút hoàn tất để đơn đặt phòng xuất hiện trong mục Booked Tours.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.grey.shade600,
@@ -396,7 +400,7 @@ class _PriceCard extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Đã lấy theo chuyến đi đã book',
+                  'Giá theo loại phòng bạn chọn',
                   style: TextStyle(color: Colors.white60, fontSize: 12),
                 ),
               ],

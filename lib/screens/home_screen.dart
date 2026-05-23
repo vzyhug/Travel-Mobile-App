@@ -791,7 +791,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () {
               if (selected) return;
 
-              if (index == 1) {
+              // Cập nhật chỉ số tab được chọn
+              setState(() {
+                selectedBottomIndex = index;
+              });
+
+              // Điều hướng theo tab
+              if (index == 0) {
+                // Đang ở Home thì không làm gì
+              } else if (index == 1) {
                 navigateToTab(context, const ExploreScreen());
               } else if (index == 2) {
                 navigateToTab(context, const ChatScreen());

@@ -1,31 +1,33 @@
 class LocalBookingModel {
   final String bookingId;
-  final int tripId;
+  final String tripId;
   final String tripName;
-  final int price;
+  final double price;
   final String location;
   final String imageUrl;
   final DateTime bookedAt;
 
-  const LocalBookingModel({
+  LocalBookingModel({
     required this.bookingId,
-    required this.tripId,
+    required dynamic tripId,
     required this.tripName,
     required this.price,
     required this.location,
     required this.imageUrl,
     required this.bookedAt,
-  });
+  }) : tripId = tripId.toString();
 
   factory LocalBookingModel.fromJson(Map<String, dynamic> json) {
     return LocalBookingModel(
       bookingId: json['bookingId'] ?? '',
-      tripId: json['tripId'] ?? 0,
+      tripId: json['tripId'] ?? '',
       tripName: json['tripName'] ?? '',
-      price: json['price'] ?? 0,
+      price: (json['price'] ?? 0).toDouble(),
       location: json['location'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
-      bookedAt: DateTime.tryParse(json['bookedAt'] ?? '') ?? DateTime.now(),
+      bookedAt: json['bookedAt'] != null
+          ? DateTime.parse(json['bookedAt'])
+          : DateTime.now(),
     );
   }
 
