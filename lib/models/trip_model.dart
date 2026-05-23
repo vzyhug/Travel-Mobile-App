@@ -29,7 +29,11 @@ class TripModel {
 
   factory TripModel.fromJson(Map<String, dynamic> json) {
     final location = (json['location'] ?? '').toString();
-    final locationParts = location.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
+    final locationParts = location
+        .split(',')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
 
     return TripModel(
       id: _toInt(json['id']),
@@ -38,7 +42,10 @@ class TripModel {
       type: (json['type'] ?? '').toString(),
       duration: (json['duration'] ?? '').toString(),
       location: location,
-      country: (json['country'] ?? (locationParts.isNotEmpty ? locationParts.last : '')).toString(),
+      country:
+          (json['country'] ??
+                  (locationParts.isNotEmpty ? locationParts.last : ''))
+              .toString(),
       imageUrl: (json['imageUrl'] ?? json['image'] ?? '').toString(),
       rating: _toDouble(json['rating']),
       price: _toInt(json['price']),
