@@ -101,4 +101,29 @@ class LocalStorageService {
     await prefs.remove(_favoriteKey);
     await prefs.remove(_favoriteHotelKey);
   }
+
+  static const String _userEmailKey = 'logged_in_user_email';
+  static const String _userNameKey = 'logged_in_user_name';
+
+  Future<void> saveUserSession({required String email, required String name}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userEmailKey, email);
+    await prefs.setString(_userNameKey, name);
+  }
+
+  Future<String?> getUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userEmailKey);
+  }
+
+  Future<String?> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userNameKey);
+  }
+
+  Future<void> clearUserSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userEmailKey);
+    await prefs.remove(_userNameKey);
+  }
 }

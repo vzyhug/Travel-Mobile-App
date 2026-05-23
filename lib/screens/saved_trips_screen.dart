@@ -7,10 +7,12 @@ import '../models/hotel_model.dart';
 import '../services/api_service.dart';
 
 import 'trip_detail_screen.dart';
-import 'payment_screen.dart';
 import 'detail_explore_screen.dart';
 import 'home_screen.dart';
 import 'explore_screen.dart';
+import 'chat_screen.dart';
+import 'profile_screen.dart';
+import '../helper/navigation_helper.dart';
 
 const Color savedPrimaryColor = Color(0xFF059AA6);
 
@@ -55,6 +57,7 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
       setState(() {
         allTrips = trips;
         favoriteTripIds = favorites;
+        // Ép kiểu an toàn từ String sang int cho bookedTripIds
         bookedTripIds = bookings.map((b) => int.tryParse(b.tripId) ?? 0).toSet();
 
         allHotels = hotels;
@@ -228,34 +231,25 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
 
   Widget _buildBottomNav() {
     final icons = [Icons.home, Icons.location_on, Icons.chat_bubble, Icons.favorite, Icons.person];
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 14, offset: const Offset(0, -4))]),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(icons.length, (index) {
-          final selected = index == 3;
-          return GestureDetector(
-            onTap: () {
-              if (index == 0) {
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (route) => false);
-              } else if (index == 1) {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ExploreScreen()));
-              } else if (index == 3) {
-                loadSavedTrips();
-              }
-            },
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icons[index], color: selected ? savedPrimaryColor : Colors.grey, size: 27),
-                const SizedBox(height: 4),
-                Container(width: 6, height: 6, decoration: BoxDecoration(color: selected ? savedPrimaryColor : Colors.transparent, shape: BoxShape.circle)),
-              ],
-            ),
-          );
-        }),
-      ),
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: savedPrimaryColor,
+      unselectedItemColor: Colors.grey,
+      currentIndex: 3,
+      onTap: (index) {
+        if (index == 3) return;
+        if (index == 0) navigateToTab(context, const HomeScreen());
+        else if (index == 1) navigateToTab(context, const ExploreScreen());
+        else if (index == 2) navigateToTab(context, const ChatScreen());
+        else if (index == 4) navigateToTab(context, const ProfileScreen());
+      },
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Explore'),
+        BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: 'Chat'),
+        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Wishlist'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      ],
     );
   }
 

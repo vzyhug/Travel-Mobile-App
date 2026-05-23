@@ -6,6 +6,9 @@ import '../models/trip_model.dart';
 import 'trip_detail_screen.dart';
 import 'saved_trips_screen.dart';
 import 'explore_screen.dart';
+import 'chat_screen.dart';
+import 'profile_screen.dart';
+import '../helper/navigation_helper.dart';
 
 const Color primaryColor = Color(0xFF059AA6);
 
@@ -785,37 +788,26 @@ class _HomeScreenState extends State<HomeScreen> {
           final selected = selectedBottomIndex == index;
 
           return GestureDetector(
-            onTap: () async {
-              if (index == 1) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ExploreScreen()),
-                );
-                return;
-              }
+            onTap: () {
+              if (selected) return;
 
-              if (index == 3) {
-                setState(() {
-                  selectedBottomIndex = 3;
-                });
-
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SavedTripsScreen()),
-                );
-
-                await loadHomeData();
-                if (!mounted) return;
-
-                setState(() {
-                  selectedBottomIndex = 0;
-                });
-                return;
-              }
-
+              // Cập nhật chỉ số tab được chọn
               setState(() {
                 selectedBottomIndex = index;
               });
+
+              // Điều hướng theo tab
+              if (index == 0) {
+                // Đang ở Home thì không làm gì
+              } else if (index == 1) {
+                navigateToTab(context, const ExploreScreen());
+              } else if (index == 2) {
+                navigateToTab(context, const ChatScreen());
+              } else if (index == 3) {
+                navigateToTab(context, const SavedTripsScreen());
+              } else if (index == 4) {
+                navigateToTab(context, const ProfileScreen());
+              }
             },
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
