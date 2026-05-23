@@ -5,6 +5,7 @@ import '../helper/trip_service.dart';
 import '../models/trip_model.dart';
 import 'trip_detail_screen.dart';
 import 'saved_trips_screen.dart';
+import 'explore_screen.dart';
 
 const Color primaryColor = Color(0xFF059AA6);
 
@@ -785,6 +786,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return GestureDetector(
             onTap: () async {
+              if (index == 1) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ExploreScreen()),
+                );
+                return;
+              }
+
               if (index == 3) {
                 setState(() {
                   selectedBottomIndex = 3;
