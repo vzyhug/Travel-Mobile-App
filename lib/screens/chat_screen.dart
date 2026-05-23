@@ -4,6 +4,7 @@ import 'home_screen.dart';
 import 'explore_screen.dart';
 import 'saved_trips_screen.dart';
 import 'profile_screen.dart';
+import '../services/gemini_service.dart';
 
 const Color tealColor = Color(0xFF059AA6);
 
@@ -21,6 +22,15 @@ class _ChatScreenState extends State<ChatScreen> {
   Map<String, dynamic>? activeThread;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    activeThread = threads.firstWhere(
+      (t) => t['id'] == 't2',
+      orElse: () => threads[1],
+    );
+  }
   
   List<Map<String, dynamic>> threads = [
     {
@@ -85,7 +95,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void sendMessage() {
+  void sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty || activeThread == null) return;
 
@@ -99,63 +109,45 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _scrollToBottom();
 
-    // Simulate smart agent response
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted || activeThread == null) return;
+    String reply = "";
+    final name = activeThread!['name'];
 
-      String reply = "";
-      final name = activeThread!['name'];
-
-      if (name.contains("Elena")) {
-        reply = "Cảm ơn bạn đã nhắn tin cho Elena! Mình đang dẫn đoàn trekking bản Cát Cát một lát, mình sẽ tư vấn chi tiết lịch trình du lịch cho bạn ngay nhé! 🌲✨";
-      } else if (name.contains("AI")) {
-        if (text.toLowerCase().contains("giá") || text.toLowerCase().contains("tiền")) {
-          reply = "Các tour của chúng tôi dao động từ 1.350.000đ đến 2.490.000đ trọn gói. Bạn có thể xem chi tiết ở Tab Home và thanh toán quét mã QR cực tiện lợi!";
-        } else {
-          reply = "Tôi đã ghi nhận ý kiến của bạn. Tôi gợi ý bạn nên xem thêm các gói du lịch được lưu trong tab Wishlist (Trái tim) để dễ dàng theo dõi nha! Bạn cần tôi giúp gì thêm không?";
-        }
+    try {
+      if (name.contains("AI")) {
+        // Sao chép lịch sử để truyền ngữ cảnh cho Gemini
+        final localMessages = List<Map<String, dynamic>>.from(activeThread!['messages']);
+        reply = await GeminiService().getChatResponse(localMessages);
       } else {
-        reply = "Cảm ơn bạn. Bộ phận CSKH đã xác nhận thông tin. Chúng tôi sẽ cập nhật trạng thái đặt phòng của bạn trong mục Booked Tours trong giây lát.";
+        // Đợi 2 giây để giả lập người thật trả lời
+        await Future.delayed(const Duration(seconds: 2));
+        if (name.contains("Elena")) {
+          reply = "Cảm ơn bạn đã nhắn tin cho Elena! Mình đang dẫn đoàn trekking bản Cát Cát một lát, mình sẽ tư vấn chi tiết lịch trình du lịch cho bạn ngay nhé! 🌲✨";
+        } else {
+          reply = "Cảm ơn bạn. Bộ phận CSKH đã xác nhận thông tin. Chúng tôi sẽ cập nhật trạng thái đặt phòng của bạn trong mục Booked Tours trong giây lát.";
+        }
       }
+    } catch (e) {
+      reply = "Có lỗi xảy ra trong quá trình nhận phản hồi: $e";
+    }
 
-      setState(() {
-        activeThread!['messages'].add({"sender": "other", "text": reply});
-        activeThread!['lastMessage'] = reply;
-        isTyping = false;
-      });
+    if (!mounted || activeThread == null) return;
 
-      _scrollToBottom();
+    setState(() {
+      activeThread!['messages'].add({"sender": "other", "text": reply});
+      activeThread!['lastMessage'] = reply;
+      isTyping = false;
     });
+
+    _scrollToBottom();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: activeThread == null ? _buildDefaultAppBar() : _buildChatAppBar(),
-      body: activeThread == null ? _buildThreadList() : _buildChatWindow(),
-      bottomNavigationBar: activeThread == null ? _buildBottomNav() : null,
-    );
-  }
-
-  PreferredSizeWidget _buildDefaultAppBar() {
-    return AppBar(
-      elevation: 0,
-      backgroundColor: Colors.white,
-      title: const Text(
-        'Inbox Messages',
-        style: TextStyle(
-          color: Colors.black87,
-          fontSize: 24,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.mark_chat_read_outlined, color: tealColor),
-          onPressed: () {},
-        ),
-      ],
+      appBar: _buildChatAppBar(),
+      body: _buildChatWindow(),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -163,14 +155,6 @@ class _ChatScreenState extends State<ChatScreen> {
     return AppBar(
       elevation: 1,
       backgroundColor: Colors.white,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black87),
-        onPressed: () {
-          setState(() {
-            activeThread = null;
-          });
-        },
-      ),
       title: Row(
         children: [
           CircleAvatar(
@@ -478,9 +462,8 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-        // Text composition area
         Container(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 28),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [

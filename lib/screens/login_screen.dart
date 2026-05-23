@@ -4,6 +4,8 @@ import 'package:travel_application/services/auth_service.dart';
 import 'package:travel_application/services/api_service.dart';
 import 'package:travel_application/screens/home_screen.dart';
 import 'package:travel_application/helper/local_storage_service.dart';
+import 'package:travel_application/screens/register_screen.dart';
+import 'package:travel_application/models/account_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,7 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final accounts = await _apiService.fetchAccounts();
-      final match = accounts.where((acc) => acc.email == email && acc.password == password).toList();
+      final localAccounts = await _localStorageService.getLocalAccounts();
+      final allAccounts = [...accounts, ...localAccounts];
+      final match = allAccounts.where((acc) => acc.email == email && acc.password == password).toList();
       
       if (match.isNotEmpty && mounted) {
         final account = match.first;
@@ -418,7 +422,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(color: Colors.white, fontSize: 14),
                         ),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterScreen(),
+                              ),
+                            );
+                          },
                           child: const Text(
                             "Sign up here",
                             style: TextStyle(
