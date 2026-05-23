@@ -45,7 +45,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _launchMaps(String address) async {
-    // Sửa link map nếu cần
     final Uri mapUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}');
     if (await canLaunchUrl(mapUrl)) {
       await launchUrl(mapUrl, mode: LaunchMode.externalApplication);
