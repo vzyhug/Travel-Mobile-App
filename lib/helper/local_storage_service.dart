@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/local_booking_model.dart';
+import '../models/account_model.dart';
 
 class LocalStorageService {
   static const String _favoriteKey = 'favorite_trip_ids';
@@ -125,5 +126,23 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userEmailKey);
     await prefs.remove(_userNameKey);
+  }
+
+  static const String _localAccountsKey = 'local_registered_accounts';
+
+  Future<List<Account>> getLocalAccounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> list = prefs.getStringList(_localAccountsKey) ?? [];
+    return list.map((item) => Account.fromJson(jsonDecode(item))).toList();
+  }
+
+  Future<void> saveLocalAccount(Account account) async {
+    final prefs = await SharedPreferences.getInstance();
+    final accounts = await getLocalAccounts();
+    if (!accounts.any((acc) => acc.email.trim().toLowerCase() == account.email.trim().toLowerCase())) {
+      accounts.add(account);
+      final list = accounts.map((acc) => jsonEncode(acc.toJson())).toList();
+      await prefs.setStringList(_localAccountsKey, list);
+    }
   }
 }

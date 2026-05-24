@@ -31,6 +31,26 @@ class ApiService {
     }
   }
 
+  Future<bool> registerAccount(Account account) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_accountsUrl/accounts'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(account.toJson()),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      } else {
+        print('Mock API Register return status code: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error calling mock register API: $e');
+      return false;
+    }
+  }
+
   static Future<List<HotelModel>> fetchHotels() async {
     try {
       final response = await http.get(Uri.parse('$_hotelsUrl/hotels'));
