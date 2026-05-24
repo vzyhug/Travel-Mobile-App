@@ -53,7 +53,7 @@ class ApiService {
 
   static Future<List<HotelModel>> fetchHotels() async {
     try {
-      final response = await http.get(Uri.parse('$_hotelsUrl/hotels?v=2'));
+      final response = await http.get(Uri.parse('$_hotelsUrl/hotels'));
 
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
@@ -70,7 +70,7 @@ class ApiService {
 
   static Future<List<RoomModel>> fetchRooms() async {
     try {
-      final response = await http.get(Uri.parse('$_hotelsUrl/rooms?v=2'));
+      final response = await http.get(Uri.parse('$_hotelsUrl/rooms'));
 
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
