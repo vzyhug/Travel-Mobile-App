@@ -44,11 +44,24 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  // ĐÃ SỬA LỖI NÚT START
   Future<void> _launchMaps(String address) async {
-    // Sửa link map nếu cần
-    final Uri mapUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}');
-    if (await canLaunchUrl(mapUrl)) {
-      await launchUrl(mapUrl, mode: LaunchMode.externalApplication);
+    final String encodedAddress = Uri.encodeComponent(address);
+    // Đây là URL Scheme chuẩn của Google Maps
+    final Uri mapUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encodedAddress');
+
+    try {
+      if (await canLaunchUrl(mapUrl)) {
+        await launchUrl(mapUrl, mode: LaunchMode.externalApplication);
+      } else {
+        throw Exception('Could not launch maps');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không thể mở ứng dụng Bản đồ trên thiết bị này.')),
+        );
+      }
     }
   }
 
@@ -84,7 +97,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 children: [
                   TileLayer(
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.travel.application.app',
+                    userAgentPackageName: 'com.travel.app',
                   ),
                   MarkerLayer(markers: [
                     Marker(point: LatLng(_hotels[_currentPage].lat, _hotels[_currentPage].lng), width: 50, height: 50, child: Icon(Icons.location_on, color: tealColor, size: 45)),
@@ -141,44 +154,37 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ],
           ),
         ),
+
       ],
     );
   }
 
   Widget _buildCardItem(HotelModel hotel) {
+    // ĐÃ SỬA LỖI HÌNH ẢNH TRỐNG: Nếu link rỗng, dùng link ảnh mặc định
+    String imageUrl = hotel.imageUrls.isNotEmpty && hotel.imageUrls[0].trim().isNotEmpty
+        ? hotel.imageUrls[0]
+        : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80&w=800&auto=format&fit=crop';
+
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetailExploreScreen(hotel: hotel))),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: const Offset(0, 5))]),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(24), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              (() {
-                final String imageUrl = hotel.imageUrls.isNotEmpty ? hotel.imageUrls[0].trim() : '';
-                final bool isNetwork = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
-                
-                return isNetwork
-                    ? Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.hotel, size: 50, color: Colors.grey),
-                        ),
-                      )
-                    : Image.asset(
-                        imageUrl.isEmpty ? 'assets/images/default_hotel.png' : imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.hotel, size: 50, color: Colors.grey),
-                        ),
-                      );
-              })(),
-              Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black87, Colors.transparent, Colors.black87], stops: const [0.0, 0.4, 1.0]))),
+              // Có thêm errorBuilder để lỡ link ảnh bị chết (404) thì không bị sập app
+              Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey.shade300,
+                  child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                ),
+              ),
+              Container(decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black87, Colors.transparent, Colors.black87], stops: [0.0, 0.4, 1.0]))),
               Positioned(
                 top: 24, left: 24, right: 24,
                 child: Column(
