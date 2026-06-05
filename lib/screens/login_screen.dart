@@ -50,8 +50,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final accounts = await _apiService.fetchAccounts();
       final localAccounts = await _localStorageService.getLocalAccounts();
       final allAccounts = [...accounts, ...localAccounts];
-      final match = allAccounts.where((acc) => acc.email == email && acc.password == password).toList();
-      
+      final match = allAccounts
+          .where((acc) => acc.email == email && acc.password == password)
+          .toList();
+
       if (match.isNotEmpty && mounted) {
         final account = match.first;
         await _localStorageService.saveUserSession(
@@ -105,10 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
           name = user.user!.displayName ?? 'Social User';
           email = user.user!.email ?? 'social@gmail.com';
         }
-        await _localStorageService.saveUserSession(
-          email: email,
-          name: name,
-        );
+        await _localStorageService.saveUserSession(email: email, name: name);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

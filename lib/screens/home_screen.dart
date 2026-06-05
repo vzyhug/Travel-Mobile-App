@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../helper/local_storage_service.dart';
 import '../helper/trip_service.dart';
 import '../models/trip_model.dart';
+import '../models/hotel_model.dart';
+import '../services/api_service.dart';
 import 'trip_detail_screen.dart';
 import 'saved_trips_screen.dart';
 import 'explore_screen.dart';
@@ -28,12 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
   String? errorMessage;
 
   List<TripModel> trips = [];
+  List<HotelModel> topHotels = [];
   Set<int> favoriteTripIds = {};
 
   String selectedCategory = 'All';
   int selectedBottomIndex = 0;
   bool showAllTopTrips = false;
-  bool showAllGroupTrips = false;
 
   final List<String> categories = ['All', 'Lakes', 'Sea', 'Mountain', 'Forest'];
 
@@ -53,12 +55,16 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final loadedTrips = await _tripService.getTrips();
       final loadedFavorites = await _localStorageService.getFavoriteTripIds();
+      final loadedHotels = await ApiService.fetchHotels();
+      
+      loadedHotels.sort((a, b) => b.rating.compareTo(a.rating));
 
       if (!mounted) return;
 
       setState(() {
         trips = loadedTrips;
         favoriteTripIds = loadedFavorites;
+        topHotels = loadedHotels.take(3).toList();
         isLoading = false;
         errorMessage = null;
       });
@@ -85,10 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       return matchCategory && matchSearch;
     }).toList();
-  }
-
-  List<TripModel> get groupTrips {
-    return trips.where((trip) => trip.category == 'Mountain').toList();
   }
 
   bool get hasActiveFilter {
@@ -206,16 +208,12 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildTopTrips(topTrips),
           const SizedBox(height: 22),
           _buildSectionTitle(
-            'Group Trips',
-            showAllGroupTrips ? 'Show less' : 'See All',
-            () {
-              setState(() {
-                showAllGroupTrips = !showAllGroupTrips;
-              });
-            },
+            'Top 3 Hotels',
+            '',
+            () {},
           ),
           const SizedBox(height: 12),
-          _buildGroupTrips(),
+          _buildTopHotels(),
         ],
       ),
     );
@@ -625,136 +623,115 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGroupTrips() {
-    if (groupTrips.isEmpty) {
+  Widget _buildTopHotels() {
+    if (topHotels.isEmpty) {
       return const Text(
-        'No group trips available',
+        'No hotels available',
         style: TextStyle(color: Colors.grey),
       );
     }
 
-    final items = showAllGroupTrips ? groupTrips : groupTrips.take(3).toList();
-
     return Column(
-      children: items.map((trip) {
-        return GestureDetector(
-          onTap: () => openTripDetail(trip),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _networkImage(
-                  trip.imageUrl,
-                  width: 120,
+      children: topHotels.map((hotel) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.07),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _networkImage(
+                hotel.imageUrls.isNotEmpty ? hotel.imageUrls.first : '',
+                width: 120,
+                height: 100,
+                radius: 14,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
                   height: 100,
-                  radius: 14,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 100,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          trip.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hotel.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          trip.location,
-                          style: TextStyle(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
                             color: Colors.grey.shade600,
-                            fontSize: 12,
+                            size: 14,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              color: Colors.grey.shade600,
-                              size: 14,
-                            ),
-                            Text(
-                              trip.country,
+                          Expanded(
+                            child: Text(
+                              hotel.address,
                               style: TextStyle(
                                 color: Colors.grey.shade600,
                                 fontSize: 12,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 74,
-                              height: 24,
-                              child: Stack(
-                                children: List.generate(3, (index) {
-                                  return Positioned(
-                                    left: index * 18,
-                                    child: CircleAvatar(
-                                      radius: 12,
-                                      backgroundColor: Colors.white,
-                                      child: CircleAvatar(
-                                        radius: 10,
-                                        backgroundColor: Colors.grey.shade300,
-                                        child: const Icon(
-                                          Icons.person,
-                                          size: 13,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            hotel.rating.toString(),
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
                             ),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: LinearProgressIndicator(
-                                  value: 0.8,
-                                  minHeight: 5,
-                                  backgroundColor: Colors.grey.shade200,
-                                  color: primaryColor,
-                                ),
-                              ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '\$${hotel.pricePerNight}',
+                            style: const TextStyle(
+                              color: primaryColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
                             ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              '80%',
-                              style: TextStyle(
-                                color: primaryColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          ),
+                          const Text(
+                            '/Night',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       }).toList(),

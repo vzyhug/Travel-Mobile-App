@@ -75,8 +75,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget _buildMainContent() {
     return Column(
       children: [
+        Expanded(
+          child: Stack(
+            children: [
+              FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(initialCenter: LatLng(_hotels[0].lat, _hotels[0].lng), initialZoom: 15.0),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.travel.application.app',
+                  ),
+                  MarkerLayer(markers: [
+                    Marker(point: LatLng(_hotels[_currentPage].lat, _hotels[_currentPage].lng), width: 50, height: 50, child: Icon(Icons.location_on, color: tealColor, size: 45)),
+                  ]),
+                ],
+              ),
+              Positioned(
+                bottom: 24, left: 24,
+                child: ElevatedButton.icon(
+                  onPressed: () => _launchMaps(_hotels[_currentPage].address),
+                  icon: const Icon(Icons.near_me, color: Colors.white),
+                  label: const Text('Start', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(backgroundColor: tealColor, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: const StadiumBorder()),
+                ),
+              ),
+            ],
+          ),
+        ),
         SafeArea(
-          bottom: false,
+          top: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -113,34 +141,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ],
           ),
         ),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            child: Stack(
-              children: [
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(initialCenter: LatLng(_hotels[0].lat, _hotels[0].lng), initialZoom: 15.0),
-                  children: [
-                    TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                    MarkerLayer(markers: [
-                      Marker(point: LatLng(_hotels[_currentPage].lat, _hotels[_currentPage].lng), width: 50, height: 50, child: Icon(Icons.location_on, color: tealColor, size: 45)),
-                    ]),
-                  ],
-                ),
-                Positioned(
-                  bottom: 24, left: 24,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _launchMaps(_hotels[_currentPage].address),
-                    icon: const Icon(Icons.near_me, color: Colors.white),
-                    label: const Text('Start', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(backgroundColor: tealColor, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: StadiumBorder()),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -156,16 +156,48 @@ class _ExploreScreenState extends State<ExploreScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.network(hotel.imageUrls.isNotEmpty ? hotel.imageUrls[0] : '', fit: BoxFit.cover),
-              Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black54, Colors.transparent]))),
+              (() {
+                final String imageUrl = hotel.imageUrls.isNotEmpty ? hotel.imageUrls[0].trim() : '';
+                final bool isNetwork = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+                
+                return isNetwork
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.hotel, size: 50, color: Colors.grey),
+                        ),
+                      )
+                    : Image.asset(
+                        imageUrl.isEmpty ? 'assets/images/default_hotel.png' : imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.hotel, size: 50, color: Colors.grey),
+                        ),
+                      );
+              })(),
+              Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black87, Colors.transparent, Colors.black87], stops: const [0.0, 0.4, 1.0]))),
               Positioned(
                 top: 24, left: 24, right: 24,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(hotel.name, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold), maxLines: 1),
-                    Row(children: [const Icon(Icons.location_on_outlined, color: Colors.white70, size: 16), Expanded(child: Text(hotel.address, style: const TextStyle(color: Colors.white70), maxLines: 1))]),
+                    const SizedBox(height: 4),
+                    Row(children: [const Icon(Icons.location_on_outlined, color: Colors.white70, size: 16), const SizedBox(width: 4), Expanded(child: Text(hotel.address, style: const TextStyle(color: Colors.white70), maxLines: 1))]),
+                    const SizedBox(height: 8),
+                    Text('\$${hotel.pricePerNight} / đêm', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
                   ],
+                ),
+              ),
+              Positioned(
+                bottom: 20, right: 20,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetailExploreScreen(hotel: hotel))),
+                  style: ElevatedButton.styleFrom(backgroundColor: tealColor, shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
+                  child: const Text('Xem chi tiết', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               )
             ],
@@ -176,24 +208,70 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: tealColor,
-      currentIndex: 1,
-      onTap: (index) {
-        if (index == 1) return;
-        if (index == 0) navigateToTab(context, const HomeScreen());
-        else if (index == 2) navigateToTab(context, const ChatScreen());
-        else if (index == 3) navigateToTab(context, const SavedTripsScreen());
-        else if (index == 4) navigateToTab(context, const ProfileScreen());
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Explore'),
-        BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded), label: 'Chat'),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite_rounded), label: 'Wishlist'),
-        BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
-      ],
+    int selectedBottomIndex = 1;
+    final List<IconData> icons = [
+      Icons.home_filled,
+      Icons.location_on,
+      Icons.chat_bubble_rounded,
+      Icons.favorite_rounded,
+      Icons.person_rounded,
+    ];
+
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(icons.length, (index) {
+          final selected = selectedBottomIndex == index;
+
+          return GestureDetector(
+            onTap: () {
+              if (selected) return;
+
+              if (index == 0) {
+                navigateToTab(context, const HomeScreen());
+              } else if (index == 1) {
+                // Đang ở Explore thì không làm gì
+              } else if (index == 2) {
+                navigateToTab(context, const ChatScreen());
+              } else if (index == 3) {
+                navigateToTab(context, const SavedTripsScreen());
+              } else if (index == 4) {
+                navigateToTab(context, const ProfileScreen());
+              }
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icons[index],
+                  color: selected ? tealColor : Colors.grey,
+                  size: 27,
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: selected ? tealColor : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }

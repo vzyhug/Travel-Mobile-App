@@ -17,7 +17,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final int selectedBottomIndex = 2;
-  
+
   // State for active thread detail view
   Map<String, dynamic>? activeThread;
   final TextEditingController _messageController = TextEditingController();
@@ -31,49 +31,84 @@ class _ChatScreenState extends State<ChatScreen> {
       orElse: () => threads[1],
     );
   }
-  
+
   List<Map<String, dynamic>> threads = [
     {
       "id": "t1",
       "name": "Elena (Tour Guide)",
-      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
+      "avatar":
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
       "status": "Online",
       "role": "Hướng dẫn viên địa phương",
-      "lastMessage": "Hôm nay thời tiết ở Sa Pa rất đẹp để đi leo núi Fansipan đó bạn!",
+      "lastMessage":
+          "Hôm nay thời tiết ở Sa Pa rất đẹp để đi leo núi Fansipan đó bạn!",
       "time": "10:42 AM",
       "messages": [
-        {"sender": "other", "text": "Xin chào! Mình là Elena, hướng dẫn viên du lịch của bạn."},
-        {"sender": "other", "text": "Hôm nay thời tiết ở Sa Pa rất đẹp để đi leo núi Fansipan đó bạn! Bạn cần mình tư vấn lịch trình chi tiết không?"}
-      ]
+        {
+          "sender": "other",
+          "text": "Xin chào! Mình là Elena, hướng dẫn viên du lịch của bạn.",
+        },
+        {
+          "sender": "other",
+          "text":
+              "Hôm nay thời tiết ở Sa Pa rất đẹp để đi leo núi Fansipan đó bạn! Bạn cần mình tư vấn lịch trình chi tiết không?",
+        },
+      ],
     },
     {
       "id": "t2",
       "name": "AI Travel Assistant",
-      "avatar": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80",
+      "avatar":
+          "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80",
       "status": "Active",
       "role": "Hỗ trợ thông minh 24/7",
-      "lastMessage": "Tôi có thể gợi ý các địa điểm ăn uống đặc sản tốt nhất tại Đà Nẵng.",
+      "lastMessage":
+          "Tôi có thể gợi ý các địa điểm ăn uống đặc sản tốt nhất tại Đà Nẵng.",
       "time": "Hôm qua",
       "messages": [
-        {"sender": "other", "text": "Xin chào! Tôi là trợ lý ảo AI. Tôi có thể giúp bạn lập kế hoạch, tìm khách sạn và khám phá các món ăn đặc sản tại Việt Nam!"},
-        {"sender": "user", "text": "Chào bạn, hãy gợi ý cho mình địa điểm du lịch đẹp."},
-        {"sender": "other", "text": "Tuyệt vời! Nếu bạn thích leo núi săn mây, tôi khuyên bạn nên đi Sa Pa hoặc Đà Lạt. Nếu thích biển xanh cát trắng, Phú Quốc và Nha Trang là sự lựa chọn số một đó!"}
-      ]
+        {
+          "sender": "other",
+          "text":
+              "Xin chào! Tôi là trợ lý ảo AI. Tôi có thể giúp bạn lập kế hoạch, tìm khách sạn và khám phá các món ăn đặc sản tại Việt Nam!",
+        },
+        {
+          "sender": "user",
+          "text": "Chào bạn, hãy gợi ý cho mình địa điểm du lịch đẹp.",
+        },
+        {
+          "sender": "other",
+          "text":
+              "Tuyệt vời! Nếu bạn thích leo núi săn mây, tôi khuyên bạn nên đi Sa Pa hoặc Đà Lạt. Nếu thích biển xanh cát trắng, Phú Quốc và Nha Trang là sự lựa chọn số một đó!",
+        },
+      ],
     },
     {
       "id": "t3",
       "name": "John (Support Desk)",
-      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+      "avatar":
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
       "status": "Away",
       "role": "Chăm sóc khách hàng",
       "lastMessage": "Yêu cầu hoàn trả đặt phòng của bạn đang được xử lý.",
       "time": "2 ngày trước",
       "messages": [
-        {"sender": "other", "text": "Chào bạn, mình là John hỗ trợ kỹ thuật và thanh toán của TravelApp."},
-        {"sender": "user", "text": "Mình vừa thanh toán thành công chuyển khoản nhưng muốn đổi ngày đi có được không?"},
-        {"sender": "other", "text": "Dạ hoàn toàn được ạ. Yêu cầu hoàn trả đặt phòng cũ hoặc đổi lịch trình đang được xử lý. Bạn đợi mình kiểm tra trong 5 phút nhé."}
-      ]
-    }
+        {
+          "sender": "other",
+          "text":
+              "Chào bạn, mình là John hỗ trợ kỹ thuật và thanh toán của TravelApp.",
+        },
+        {
+          "sender": "user",
+          "text":
+              "Mình vừa thanh toán thành công chuyển khoản nhưng muốn đổi ngày đi có được không?",
+        },
+        {
+          "sender": "other",
+          "text":
+              "Dạ hoàn toàn được ạ. Yêu cầu hoàn trả đặt phòng cũ hoặc đổi lịch trình đang được xử lý. Bạn đợi mình kiểm tra trong 5 phút nhé.",
+        },
+      ],
+    },
   ];
 
   bool isTyping = false;
@@ -115,15 +150,19 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       if (name.contains("AI")) {
         // Sao chép lịch sử để truyền ngữ cảnh cho Gemini
-        final localMessages = List<Map<String, dynamic>>.from(activeThread!['messages']);
+        final localMessages = List<Map<String, dynamic>>.from(
+          activeThread!['messages'],
+        );
         reply = await GeminiService().getChatResponse(localMessages);
       } else {
         // Đợi 2 giây để giả lập người thật trả lời
         await Future.delayed(const Duration(seconds: 2));
         if (name.contains("Elena")) {
-          reply = "Cảm ơn bạn đã nhắn tin cho Elena! Mình đang dẫn đoàn trekking bản Cát Cát một lát, mình sẽ tư vấn chi tiết lịch trình du lịch cho bạn ngay nhé! 🌲✨";
+          reply =
+              "Cảm ơn bạn đã nhắn tin cho Elena! Mình đang dẫn đoàn trekking bản Cát Cát một lát, mình sẽ tư vấn chi tiết lịch trình du lịch cho bạn ngay nhé! 🌲✨";
         } else {
-          reply = "Cảm ơn bạn. Bộ phận CSKH đã xác nhận thông tin. Chúng tôi sẽ cập nhật trạng thái đặt phòng của bạn trong mục Booked Tours trong giây lát.";
+          reply =
+              "Cảm ơn bạn. Bộ phận CSKH đã xác nhận thông tin. Chúng tôi sẽ cập nhật trạng thái đặt phòng của bạn trong mục Booked Tours trong giây lát.";
         }
       }
     } catch (e) {
@@ -177,7 +216,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 Text(
                   activeThread!['status'],
                   style: TextStyle(
-                    color: activeThread!['status'] == "Online" || activeThread!['status'] == "Active"
+                    color:
+                        activeThread!['status'] == "Online" ||
+                            activeThread!['status'] == "Active"
                         ? Colors.green
                         : Colors.orange,
                     fontSize: 11,
@@ -189,16 +230,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.phone_outlined, color: tealColor),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.videocam_outlined, color: tealColor),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 
@@ -264,21 +295,29 @@ class _ChatScreenState extends State<ChatScreen> {
                                   width: 12,
                                   height: 12,
                                   decoration: BoxDecoration(
-                                    color: t['status'] == "Online" || t['status'] == "Active"
+                                    color:
+                                        t['status'] == "Online" ||
+                                            t['status'] == "Active"
                                         ? Colors.green
                                         : Colors.grey.shade400,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
                                   ),
                                 ),
-                              )
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
                             t['name'].split(' ')[0],
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                          )
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -288,7 +327,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ),
-        
+
         const Divider(height: 20, thickness: 1),
 
         // Threads list
@@ -303,7 +342,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 onTap: () => selectThread(thread),
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       CircleAvatar(
@@ -355,14 +397,14 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
               );
             },
           ),
-        )
+        ),
       ],
     );
   }
@@ -401,10 +443,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 final isUser = msg['sender'] == 'user';
 
                 return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width * 0.75,
                     ),
@@ -421,7 +468,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           color: Colors.black.withOpacity(0.03),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
-                        )
+                        ),
                       ],
                     ),
                     child: Text(
@@ -449,13 +496,20 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Text(
                     '${activeThread!['name'].split(' ')[0]} đang gõ...',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontStyle: FontStyle.italic),
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   const SizedBox(
                     width: 10,
                     height: 10,
-                    child: CircularProgressIndicator(strokeWidth: 1.5, color: tealColor),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      color: tealColor,
+                    ),
                   ),
                 ],
               ),
@@ -509,10 +563,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   child: const Icon(Icons.send, color: Colors.white, size: 20),
                 ),
-              )
+              ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
