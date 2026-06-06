@@ -414,7 +414,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               const SizedBox(height: 22),
               _buildTitleSection(trip),
               const SizedBox(height: 14),
-              _buildLocation(trip),
+              _buildInfoSection(trip),
               const SizedBox(height: 22),
               _buildDescription(trip),
               const SizedBox(height: 28),
@@ -552,18 +552,43 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     );
   }
 
-  Widget _buildLocation(TripModel trip) {
-    return Row(
+  Widget _buildInfoSection(TripModel trip) {
+    return Column(
       children: [
-        Icon(Icons.location_on, color: Colors.grey.shade600, size: 22),
-        const SizedBox(width: 4),
-        Text(
-          trip.location,
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.location_on, color: Colors.grey.shade600, size: 22),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                trip.location,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.access_time_rounded, color: Colors.grey.shade600, size: 22),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                trip.duration,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -68,26 +68,38 @@ class AdminBookingsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ListTile(
+                        contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.receipt_long, color: Color(0xFF059AA6), size: 40),
                         title: Text(data['tripName'] ?? data['hotelName'] ?? 'Không rõ', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Giá: ${data['price'] ?? 0} đ\nTrạng thái: $status'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text('Khách hàng: ${data['customerName'] ?? data['userEmail'] ?? 'Không rõ'}'),
+                            Text('Tài khoản: ${data['userEmail'] ?? 'Không rõ'}'),
+                            Text('Số lượng: ${data['guestCount'] ?? 1} người${data['type'] == 'hotel' ? ', ${data['nightCount'] ?? 1} đêm' : ''}'),
+                            Text('Giá: ${data['price'] ?? 0} đ', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF059AA6))),
+                            Text('Trạng thái: $status', style: TextStyle(fontWeight: FontWeight.bold, color: status == 'Đã duyệt' ? Colors.green : (status == 'Đã hủy' ? Colors.red : Colors.orange))),
+                          ],
+                        ),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () => _deleteBooking(context, docs[index].id),
                         ),
                       ),
+                      const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          if (status != 'Đã duyệt')
+                          if (status == 'Chờ duyệt')
                             TextButton(
                               onPressed: () => _updateBookingStatus(context, docs[index].id, 'Đã duyệt'),
-                              child: const Text('Duyệt', style: TextStyle(color: Colors.green)),
+                              child: const Text('Duyệt', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                             ),
-                          if (status != 'Đã hủy')
+                          if (status == 'Chờ duyệt')
                             TextButton(
                               onPressed: () => _updateBookingStatus(context, docs[index].id, 'Đã hủy'),
-                              child: const Text('Hủy đơn', style: TextStyle(color: Colors.red)),
+                              child: const Text('Hủy đơn', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                             ),
                         ],
                       )

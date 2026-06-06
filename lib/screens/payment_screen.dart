@@ -6,6 +6,8 @@ import '../config/payment_config.dart';
 import '../helper/local_storage_service.dart';
 import '../models/local_booking_model.dart';
 import '../models/trip_model.dart';
+import '../services/api_service.dart';
+import 'all_hotels_screen.dart';
 
 const Color paymentPrimaryColor = Color(0xFF059AA6);
 const Color paymentBackgroundColor = Color(0xFFF6FBFC);
@@ -111,7 +113,53 @@ class _PaymentScreenState extends State<PaymentScreen> {
       SnackBar(content: Text('Đã booked ${widget.trip.name}.')),
     );
 
-    Navigator.pop(context, true);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Thanh toán thành công 🎉', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('Bạn đã đặt tour thành công. Bạn có muốn xem thêm khách sạn cho chuyến đi này không?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+            child: const Text('Trở về trang chủ', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: paymentPrimaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(context); // close dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(child: CircularProgressIndicator(color: paymentPrimaryColor)),
+              );
+              try {
+                final hotels = await ApiService.fetchHotels();
+                if (!mounted) return;
+                Navigator.pop(context); // close loading
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => AllHotelsScreen(allHotels: hotels)),
+                  (route) => route.isFirst,
+                );
+              } catch (e) {
+                if (!mounted) return;
+                Navigator.pop(context); // close loading
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
+            child: const Text('Xem thêm khách sạn', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatCurrency(num value) {

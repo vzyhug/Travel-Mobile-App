@@ -146,7 +146,7 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () => navigateToTab(context, const HomeScreen()),
             child: Container(width: 38, height: 38, decoration: BoxDecoration(color: Colors.grey.shade50, shape: BoxShape.circle), child: const Icon(Icons.arrow_back, size: 22)),
           ),
           const Expanded(child: Text('Đã lưu', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),

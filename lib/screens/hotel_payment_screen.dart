@@ -31,6 +31,15 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
 
   bool isConfirming = false;
   bool hasBooked = false;
+  int numberOfGuests = 1;
+  int numberOfNights = 1;
+  final TextEditingController nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -48,6 +57,13 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
   }
 
   Future<void> _confirmBooking() async {
+    if (nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập tên đại diện đặt phòng.')),
+      );
+      return;
+    }
+
     if (hasBooked || isConfirming) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Khách sạn này đã được booked rồi.')),
@@ -66,7 +82,7 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
       tripId: widget.hotel.id,
       // Ghép tên khách sạn và tên phòng để hiển thị cho rõ ràng
       tripName: '${widget.hotel.name} (${widget.room.type})',
-      price: widget.room.price,
+      price: widget.room.price * numberOfNights,
       location: widget.hotel.address,
       imageUrl: widget.hotel.imageUrls.isNotEmpty ? widget.hotel.imageUrls[0] : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80',
       bookedAt: DateTime.now(),
@@ -81,12 +97,15 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
         'userEmail': email ?? 'unknown',
         'tripId': widget.hotel.id,
         'tripName': '${widget.hotel.name} (${widget.room.type})',
-        'price': widget.room.price,
+        'price': widget.room.price * numberOfNights,
         'location': widget.hotel.address,
         'imageUrl': booking.imageUrl,
         'bookedAt': DateTime.now().toIso8601String(),
         'status': 'Chờ duyệt',
         'type': 'hotel',
+        'guestCount': numberOfGuests,
+        'nightCount': numberOfNights,
+        'customerName': nameController.text.trim(),
       });
     } catch (e) {
       debugPrint('Lỗi lưu Firestore: $e');
@@ -138,7 +157,7 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
   }
 
   String _buildQrUrl() {
-    final amount = widget.room.price.toInt(); // Lấy giá của Room
+    final amount = (widget.room.price * numberOfNights).toInt();
     final addInfo = Uri.encodeComponent(_buildTransferContent());
     final accountName = Uri.encodeComponent(PaymentConfig.accountName);
 
@@ -157,11 +176,194 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
     return const NetworkImage('https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80');
   }
 
+  Widget _buildGuestCounter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Số lượng người',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Giới hạn: ${widget.room.capacity} người/phòng',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (numberOfGuests > 1) {
+                    setState(() {
+                      numberOfGuests--;
+                    });
+                  }
+                },
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: numberOfGuests > 1 ? paymentPrimaryColor.withOpacity(0.1) : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.remove, size: 18, color: numberOfGuests > 1 ? paymentPrimaryColor : Colors.grey),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                numberOfGuests.toString(),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  if (numberOfGuests < widget.room.capacity) {
+                    setState(() {
+                      numberOfGuests++;
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Vượt quá giới hạn. Phòng này tối đa ${widget.room.capacity} người.')),
+                    );
+                  }
+                },
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: numberOfGuests < widget.room.capacity ? paymentPrimaryColor.withOpacity(0.1) : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.add, size: 18, color: numberOfGuests < widget.room.capacity ? paymentPrimaryColor : Colors.grey),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNightsCounter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Số lượng đêm',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (numberOfNights > 1) {
+                    setState(() {
+                      numberOfNights--;
+                    });
+                  }
+                },
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: numberOfNights > 1 ? paymentPrimaryColor.withOpacity(0.1) : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.remove, size: 18, color: numberOfNights > 1 ? paymentPrimaryColor : Colors.grey),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                numberOfNights.toString(),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    numberOfNights++;
+                  });
+                },
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: paymentPrimaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.add, size: 18, color: paymentPrimaryColor),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNameInput() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: nameController,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          labelText: 'Tên đại diện đặt',
+          labelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          icon: Icon(Icons.person, color: paymentPrimaryColor),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final qrUrl = _buildQrUrl();
     final transferContent = _buildTransferContent();
-    final amountText = _formatCurrency(widget.room.price);
+    final totalPrice = widget.room.price * numberOfNights;
+    final amountText = _formatCurrency(totalPrice);
 
     return Scaffold(
       backgroundColor: paymentBackgroundColor,
@@ -266,6 +468,12 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  _buildNameInput(),
+                  const SizedBox(height: 16),
+                  _buildGuestCounter(),
+                  const SizedBox(height: 16),
+                  _buildNightsCounter(),
+                  const SizedBox(height: 16),
                   _PriceCard(amountText: amountText),
                   const SizedBox(height: 16),
                   _QrCard(qrUrl: qrUrl),

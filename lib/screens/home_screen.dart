@@ -6,6 +6,9 @@ import '../models/trip_model.dart';
 import '../models/hotel_model.dart';
 import '../services/api_service.dart';
 import 'trip_detail_screen.dart';
+import 'all_trips_screen.dart';
+import 'all_hotels_screen.dart';
+import 'detail_explore_screen.dart';
 import 'saved_trips_screen.dart';
 import 'explore_screen.dart';
 import 'chat_screen.dart';
@@ -31,11 +34,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<TripModel> trips = [];
   List<HotelModel> topHotels = [];
+  List<HotelModel> allHotels = [];
   Set<int> favoriteTripIds = {};
 
   String selectedCategory = 'Tất cả';
   int selectedBottomIndex = 0;
   bool showAllTopTrips = false;
+  double? filterMinRating;
+  double? filterMaxPrice;
 
   final List<String> categories = ['Tất cả', 'Hồ', 'Biển', 'Núi', 'Rừng'];
 
@@ -56,18 +62,19 @@ class _HomeScreenState extends State<HomeScreen> {
       final loadedTrips = await _tripService.getTrips();
       final loadedFavorites = await _localStorageService.getFavoriteTripIds();
       final loadedHotels = await ApiService.fetchHotels();
-      
+
       loadedHotels.sort((a, b) => b.rating.compareTo(a.rating));
 
-      if (!mounted) return;
-
-      setState(() {
-        trips = loadedTrips;
-        favoriteTripIds = loadedFavorites;
-        topHotels = loadedHotels.take(3).toList();
-        isLoading = false;
-        errorMessage = null;
-      });
+      if (mounted) {
+        setState(() {
+          trips = loadedTrips;
+          allHotels = loadedHotels;
+          topHotels = loadedHotels.take(3).toList();
+          favoriteTripIds = loadedFavorites;
+          isLoading = false;
+          errorMessage = null;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -82,9 +89,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final keyword = _searchController.text.trim().toLowerCase();
 
     return trips.where((trip) {
-      final matchCategory = selectedCategory == 'Tất cả' || trip.category == selectedCategory;
+      String filterCat = selectedCategory;
+      if (selectedCategory == 'Hồ')
+        filterCat = 'Lake';
+      else if (selectedCategory == 'Biển')
+        filterCat = 'Sea';
+      else if (selectedCategory == 'Núi')
+        filterCat = 'Mountain';
+      else if (selectedCategory == 'Rừng')
+        filterCat = 'Forest';
 
-      final matchSearch = trip.name.toLowerCase().contains(keyword) ||
+      final matchCategory =
+          selectedCategory == 'Tất cả' ||
+          trip.category.toLowerCase() == filterCat.toLowerCase();
+
+      final matchSearch =
+          trip.name.toLowerCase().contains(keyword) ||
           trip.location.toLowerCase().contains(keyword) ||
           trip.country.toLowerCase().contains(keyword) ||
           trip.category.toLowerCase().contains(keyword);
@@ -94,7 +114,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool get hasActiveFilter {
-    return selectedCategory != 'Tất cả' || _searchController.text.trim().isNotEmpty;
+    return selectedCategory != 'Tất cả' ||
+        _searchController.text.trim().isNotEmpty ||
+        filterMinRating != null ||
+        filterMaxPrice != null;
   }
 
   void clearFilters() {
@@ -103,6 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
       selectedCategory = 'Tất cả';
       _searchController.clear();
       showAllTopTrips = false;
+      filterMinRating = null;
+      filterMaxPrice = null;
     });
   }
 
@@ -143,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await _localStorageService.saveFavoriteTripIds(favoriteTripIds);
     }
   }
+
   String _formatCurrency(num value) {
     final amount = value.toInt();
     final text = amount.toString().replaceAllMapped(
@@ -156,9 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: buildBody(),
-      ),
+      body: SafeArea(child: buildBody()),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -183,7 +207,23 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    final topTrips = showAllTopTrips ? filteredTrips : filteredTrips.take(6).toList();
+    var sortedTrips = List<TripModel>.from(filteredTrips)
+      ..sort((a, b) => b.rating.compareTo(a.rating));
+
+    if (filterMinRating != null) {
+      sortedTrips = sortedTrips
+          .where((t) => t.rating >= filterMinRating!)
+          .toList();
+    }
+    if (filterMaxPrice != null) {
+      sortedTrips = sortedTrips
+          .where((t) => t.price <= filterMaxPrice!)
+          .toList();
+    }
+
+    final topTrips = showAllTopTrips
+        ? sortedTrips
+        : sortedTrips.take(6).toList();
 
     return RefreshIndicator(
       color: primaryColor,
@@ -203,23 +243,25 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildClearFilterChip(),
           ],
           const SizedBox(height: 22),
-          _buildSectionTitle(
-            'Tour hàng đầu',
-            showAllTopTrips ? 'Thu gọn' : 'Xem tất cả',
-            () {
-              setState(() {
-                showAllTopTrips = !showAllTopTrips;
-              });
-            },
-          ),
+          _buildSectionTitle('Tour hàng đầu', 'Xem tất cả', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AllTripsScreen(allTrips: trips),
+              ),
+            );
+          }),
           const SizedBox(height: 12),
           _buildTopTrips(topTrips),
           const SizedBox(height: 22),
-          _buildSectionTitle(
-            'Top 3 Khách sạn',
-            '',
-            () {},
-          ),
+          _buildSectionTitle('Top 3 Khách sạn', 'Xem tất cả', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AllHotelsScreen(allHotels: allHotels),
+              ),
+            );
+          }),
           const SizedBox(height: 12),
           _buildTopHotels(),
         ],
@@ -236,10 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 'Địa điểm',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey, fontSize: 14),
               ),
               SizedBox(height: 4),
               Row(
@@ -327,36 +366,139 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(width: 10),
         GestureDetector(
-          onTap: hasActiveFilter ? clearFilters : showFilterMessage,
+          onTap: _showFilterPopup,
           child: Container(
             height: 48,
             width: 48,
             decoration: BoxDecoration(
-              color: hasActiveFilter ? Colors.redAccent : primaryColor,
+              color: primaryColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              hasActiveFilter ? Icons.close : Icons.tune,
-              color: Colors.white,
-            ),
+            child: const Icon(Icons.tune, color: Colors.white),
           ),
         ),
       ],
     );
   }
 
-  void showFilterMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Filter theo category và search đã hoạt động.'),
+  void _showFilterPopup() {
+    double tempRating = filterMinRating ?? 0;
+    double tempPrice = filterMaxPrice ?? 50000000;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Bộ lọc Tour',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Đánh giá tối thiểu: ${tempRating.toStringAsFixed(1)} sao',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Slider(
+                    value: tempRating,
+                    min: 0,
+                    max: 5,
+                    divisions: 10,
+                    activeColor: primaryColor,
+                    onChanged: (val) => setModalState(() => tempRating = val),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Giá tối đa: ${_formatCurrency(tempPrice)}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Slider(
+                    value: tempPrice,
+                    min: 0,
+                    max: 100000000,
+                    divisions: 20,
+                    activeColor: primaryColor,
+                    onChanged: (val) => setModalState(() => tempPrice = val),
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              filterMinRating = null;
+                              filterMaxPrice = null;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: const Text(
+                            'Xoá lọc',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              filterMinRating = tempRating;
+                              filterMaxPrice = tempPrice;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: const Text(
+                            'Áp dụng',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _buildClearFilterChip() {
-    final label = selectedCategory == 'Tất cả'
-        ? 'Đang tìm kiếm'
-        : 'Đang lọc: $selectedCategory';
+    String label = 'Đang lọc';
+    if (selectedCategory != 'Tất cả')
+      label += ': $selectedCategory';
+    else if (_searchController.text.trim().isNotEmpty)
+      label = 'Đang tìm kiếm';
+    if (filterMinRating != null || filterMaxPrice != null)
+      label += ' (Có điều kiện)';
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -400,10 +542,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
           ),
         ),
         if (actionText != null && onActionTap != null)
@@ -657,116 +796,126 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Column(
       children: topHotels.map((hotel) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.07),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DetailExploreScreen(hotel: hotel),
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              _networkImage(
-                hotel.imageUrls.isNotEmpty ? hotel.imageUrls.first : '',
-                width: 120,
-                height: 100,
-                radius: 14,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.07),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                _networkImage(
+                  hotel.imageUrls.isNotEmpty ? hotel.imageUrls.first : '',
+                  width: 120,
                   height: 100,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        hotel.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
+                  radius: 14,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 100,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hotel.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: Colors.grey.shade600,
-                            size: 14,
-                          ),
-                          Expanded(
-                            child: Text(
-                              hotel.address,
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              color: Colors.grey.shade600,
+                              size: 14,
+                            ),
+                            Expanded(
+                              child: Text(
+                                hotel.address,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              hotel.rating.toString(),
+                              style: const TextStyle(
+                                color: Colors.black87,
                                 fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.star,
-                            color: Colors.amber,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            hotel.rating.toString(),
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const Spacer(),
-                          Flexible(
-                            child: FittedBox(
-                              alignment: Alignment.centerRight,
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _formatCurrency(hotel.pricePerNight),
-                                    style: const TextStyle(
-                                      color: primaryColor,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const Text(
-                                    '/đêm',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const Spacer(),
+                            Flexible(
+                              child: FittedBox(
+                                alignment: Alignment.centerRight,
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _formatCurrency(hotel.pricePerNight),
+                                      style: const TextStyle(
+                                        color: primaryColor,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const Text(
+                                      '/đêm',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }).toList(),
