@@ -5,12 +5,14 @@ class Account {
   final String name;
   final String email;
   final String password;
+  final String role;
 
   Account({
     required this.id,
     required this.name,
     required this.email,
     required this.password,
+    this.role = 'user',
   });
 
   factory Account.fromJson(Map<String, dynamic> json) {
@@ -19,6 +21,7 @@ class Account {
       name: json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       password: json['password']?.toString() ?? '',
+      role: json['role']?.toString() ?? 'user',
     );
   }
 
@@ -29,11 +32,12 @@ class Account {
       name: data['name']?.toString() ?? '',
       email: data['email']?.toString() ?? '',
       password: data['password']?.toString() ?? '',
+      role: data['role']?.toString() ?? 'user',
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name, 'email': email, 'password': password};
+    return {'id': id, 'name': name, 'email': email, 'password': password, 'role': role};
   }
 }
 

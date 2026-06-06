@@ -6,6 +6,7 @@ import 'package:travel_application/screens/home_screen.dart';
 import 'package:travel_application/helper/local_storage_service.dart';
 import 'package:travel_application/screens/register_screen.dart';
 import 'package:travel_application/models/account_model.dart';
+import 'package:travel_application/screens/admin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -59,16 +60,24 @@ class _LoginScreenState extends State<LoginScreen> {
         await _localStorageService.saveUserSession(
           email: account.email,
           name: account.name,
+          role: account.role,
         );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Đăng nhập thành công!')),
           );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
+          if (account.role == 'admin' || account.email == 'admin@gmail.com') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AdminScreen()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }
         }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
