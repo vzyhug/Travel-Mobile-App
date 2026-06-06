@@ -143,6 +143,14 @@ class _HomeScreenState extends State<HomeScreen> {
       await _localStorageService.saveFavoriteTripIds(favoriteTripIds);
     }
   }
+  String _formatCurrency(num value) {
+    final amount = value.toInt();
+    final text = amount.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
+    );
+    return '$text đ';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -593,18 +601,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Spacer(),
                   Row(
                     children: [
-                      Text(
-                        '${trip.price.toInt()} đ',
-                        style: const TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.w800,
+                      Expanded(
+                        child: FittedBox(
+                          alignment: Alignment.centerLeft,
+                          fit: BoxFit.scaleDown,
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: _formatCurrency(trip.price),
+                                  style: const TextStyle(
+                                    color: primaryColor,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const TextSpan(
+                                  text: ' / chuyến',
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                      const Text(
-                        ' / chuyến',
-                        style: TextStyle(fontSize: 11),
-                      ),
-                      const Spacer(),
+                      const SizedBox(width: 4),
                       GestureDetector(
                         onTap: () => toggleFavorite(trip.id),
                         child: Icon(
@@ -710,19 +734,30 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const Spacer(),
-                          Text(
-                            '${hotel.pricePerNight.toInt()} đ',
-                            style: const TextStyle(
-                              color: primaryColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const Text(
-                            '/đêm',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 11,
+                          Flexible(
+                            child: FittedBox(
+                              alignment: Alignment.centerRight,
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _formatCurrency(hotel.pricePerNight),
+                                    style: const TextStyle(
+                                      color: primaryColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const Text(
+                                    '/đêm',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],

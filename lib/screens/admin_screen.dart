@@ -4,9 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:travel_application/screens/login_screen.dart';
 import 'admin_users_screen.dart';
-import 'admin_trips_screen.dart';
 import 'admin_hotels_screen.dart';
+import 'admin_trips_screen.dart';
 import 'admin_bookings_screen.dart';
+import 'admin_reviews_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({Key? key}) : super(key: key);
@@ -503,22 +504,32 @@ class _AdminScreenState extends State<AdminScreen> {
       children: [
         const Text('Thao tác nhanh', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildActionIcon(Icons.domain_add, 'Thêm khách sạn', Colors.blue, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminHotelsScreen()));
-            }),
-            _buildActionIcon(Icons.flight_takeoff, 'Thêm tour', Colors.purple, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminTripsScreen()));
-            }),
-            _buildActionIcon(Icons.receipt_long, 'Quản lý đơn', Colors.green, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminBookingsScreen()));
-            }),
-            _buildActionIcon(Icons.manage_accounts, 'Người dùng', Colors.orange, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUsersScreen()));
-            }),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              _buildActionIcon(Icons.domain_add, 'Thêm khách sạn', Colors.blue, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminHotelsScreen()));
+              }),
+              const SizedBox(width: 16),
+              _buildActionIcon(Icons.flight_takeoff, 'Thêm tour', Colors.purple, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminTripsScreen()));
+              }),
+              const SizedBox(width: 16),
+              _buildActionIcon(Icons.receipt_long, 'Quản lý đơn', Colors.green, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminBookingsScreen()));
+              }),
+              const SizedBox(width: 16),
+              _buildActionIcon(Icons.manage_accounts, 'Người dùng', Colors.orange, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUsersScreen()));
+              }),
+              const SizedBox(width: 16),
+              _buildActionIcon(Icons.reviews_rounded, 'Duyệt đánh giá', Colors.redAccent, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminReviewsScreen()));
+              }),
+            ],
+          ),
         )
       ],
     );

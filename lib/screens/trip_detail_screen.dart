@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../helper/local_storage_service.dart';
 import '../models/trip_model.dart';
+import '../widgets/review_section.dart';
 import 'payment_screen.dart';
+import '../helper/local_storage_service.dart';
 
 const Color primaryColor = Color(0xFF059AA6);
 
@@ -26,12 +28,23 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   bool isBooking = false;
   bool hasBooked = false;
   int selectedImageIndex = 0;
+  String? currentUserName;
 
   @override
   void initState() {
     super.initState();
     isFavorite = widget.isFavorite;
     checkBookedStatus();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final name = await _localStorageService.getUserName();
+    if (mounted) {
+      setState(() {
+        currentUserName = name;
+      });
+    }
   }
 
   Future<void> checkBookedStatus() async {
@@ -58,30 +71,261 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       return;
     }
 
-    final result = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PaymentScreen(trip: widget.trip),
-      ),
-    );
+    _showBookingForm();
+  }
 
-    if (!mounted) return;
+  void _showBookingForm() {
+    final nameController = TextEditingController(text: currentUserName ?? '');
+    final phoneController = TextEditingController();
+    DateTime? selectedDate;
+    DateTime? endDate;
 
-    if (result == true) {
-      setState(() {
-        hasBooked = true;
-      });
-    } else {
-      await checkBookedStatus();
+    // Parse trip duration to get number of days
+    int tripDays = 0;
+    final match = RegExp(
+      r'(\d+)\s*ngày',
+      caseSensitive: false,
+    ).firstMatch(widget.trip.duration);
+    if (match != null) {
+      tripDays = int.tryParse(match.group(1) ?? '0') ?? 0;
     }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  left: 24,
+                  right: 24,
+                  top: 24,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Thông tin đặt tour',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Họ và tên',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        labelText: 'Số điện thoại',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now().add(
+                            const Duration(days: 1),
+                          ),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
+                        );
+                        if (picked != null) {
+                          setModalState(() {
+                            selectedDate = picked;
+                            if (tripDays > 0) {
+                              endDate = picked.add(Duration(days: tripDays));
+                            }
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              selectedDate == null
+                                  ? 'Ngày khởi hành'
+                                  : '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}',
+                              style: TextStyle(
+                                color: selectedDate == null
+                                    ? Colors.grey.shade600
+                                    : Colors.black87,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (endDate != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Ngày kết thúc: ${endDate!.day}/${endDate!.month}/${endDate!.year}',
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.event_available,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Tổng tiền:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          _formatCurrency(widget.trip.price),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () async {
+                          if (nameController.text.trim().isEmpty ||
+                              phoneController.text.trim().isEmpty ||
+                              selectedDate == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Vui lòng điền đầy đủ thông tin'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          Navigator.pop(context); // close sheet
+
+                          final result = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PaymentScreen(
+                                trip: widget.trip,
+                                guestCount: 1,
+                                selectedDate:
+                                    '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}${endDate != null ? ' - ${endDate!.day}/${endDate!.month}/${endDate!.year}' : ''}',
+                                customerName: nameController.text.trim(),
+                                customerPhone: phoneController.text.trim(),
+                              ),
+                            ),
+                          );
+
+                          if (!mounted) return;
+
+                          if (result == true) {
+                            setState(() {
+                              hasBooked = true;
+                            });
+                          } else {
+                            await checkBookedStatus();
+                          }
+                        },
+                        child: const Text(
+                          'Tiếp tục thanh toán',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void showAlreadyBookedMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Bạn đã đặt tour này rồi.'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Bạn đã đặt tour này rồi.')));
   }
 
   void showBookingSuccess() {
@@ -96,27 +340,17 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.check_circle,
-                color: primaryColor,
-                size: 58,
-              ),
+              const Icon(Icons.check_circle, color: primaryColor, size: 58),
               const SizedBox(height: 12),
               const Text(
                 'Đặt tour thành công',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(
-                'Bạn đã đặt ${widget.trip.name} với giá ${widget.trip.price.toInt()} đ.',
+                'Bạn đã đặt ${widget.trip.name} với giá ${_formatCurrency(widget.trip.price)}.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  height: 1.4,
-                ),
+                style: TextStyle(color: Colors.grey.shade600, height: 1.4),
               ),
               const SizedBox(height: 22),
               SizedBox(
@@ -150,6 +384,15 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     Navigator.pop(context, isFavorite);
   }
 
+  String _formatCurrency(num value) {
+    final amount = value.toInt();
+    final text = amount.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
+    );
+    return '$text đ';
+  }
+
   @override
   Widget build(BuildContext context) {
     final trip = widget.trip;
@@ -174,6 +417,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               _buildLocation(trip),
               const SizedBox(height: 22),
               _buildDescription(trip),
+              const SizedBox(height: 28),
+              ReviewSection(itemId: trip.id.toString(), itemType: 'trip'),
               const SizedBox(height: 28),
               _buildBookingButton(trip),
             ],
@@ -204,10 +449,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
         ),
         const SizedBox(width: 40),
@@ -297,20 +539,14 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         Expanded(
           child: Text(
             trip.name,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
         ),
         const Icon(Icons.star, color: Colors.amber, size: 25),
         const SizedBox(width: 4),
         Text(
           trip.rating.toString(),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -336,11 +572,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   Widget _buildDescription(TripModel trip) {
     return Text(
       '${trip.name} có gì nổi bật?\n${trip.description}',
-      style: TextStyle(
-        color: Colors.grey.shade700,
-        fontSize: 15,
-        height: 1.35,
-      ),
+      style: TextStyle(color: Colors.grey.shade700, fontSize: 15, height: 1.35),
     );
   }
 
@@ -369,13 +601,16 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : Text(
-                      hasBooked
-                          ? 'Đã đặt | ${trip.price.toInt()} đ'
-                          : 'Đặt ngay | ${trip.price.toInt()} đ',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                  : FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        hasBooked
+                            ? 'Đã đặt | ${_formatCurrency(trip.price)}'
+                            : 'Đặt ngay | ${_formatCurrency(trip.price)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
             ),
@@ -435,10 +670,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
             height: height,
             width: width,
             color: Colors.grey.shade200,
-            child: const Icon(
-              Icons.image_not_supported,
-              color: Colors.grey,
-            ),
+            child: const Icon(Icons.image_not_supported, color: Colors.grey),
           );
         },
       ),

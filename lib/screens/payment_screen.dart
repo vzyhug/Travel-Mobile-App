@@ -13,10 +13,18 @@ const Color paymentTextColor = Color(0xFF202124);
 
 class PaymentScreen extends StatefulWidget {
   final TripModel trip;
+  final int guestCount;
+  final String selectedDate;
+  final String customerName;
+  final String customerPhone;
 
   const PaymentScreen({
     super.key,
     required this.trip,
+    this.guestCount = 1,
+    this.selectedDate = '',
+    this.customerName = '',
+    this.customerPhone = '',
   });
 
   @override
@@ -62,7 +70,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       bookingId: bookingId,
       tripId: widget.trip.id.toString(),
       tripName: widget.trip.name,
-      price: widget.trip.price.toDouble(),
+      price: (widget.trip.price * widget.guestCount).toDouble(),
       location: widget.trip.location,
       imageUrl: widget.trip.imageUrl,
       bookedAt: DateTime.now(),
@@ -77,12 +85,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'userEmail': email ?? 'unknown',
         'tripId': widget.trip.id.toString(),
         'tripName': widget.trip.name,
-        'price': widget.trip.price.toDouble(),
+        'price': (widget.trip.price * widget.guestCount).toDouble(),
         'location': widget.trip.location,
         'imageUrl': widget.trip.imageUrl,
         'bookedAt': DateTime.now().toIso8601String(),
         'status': 'Chờ duyệt',
         'type': 'trip',
+        'guestCount': widget.guestCount,
+        'selectedDate': widget.selectedDate,
+        'customerName': widget.customerName,
+        'customerPhone': widget.customerPhone,
       });
     } catch (e) {
       debugPrint('Lỗi lưu Firestore: $e');
@@ -134,7 +146,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   String _buildQrUrl() {
-    final amount = trip.price.toInt();
+    final amount = (trip.price * widget.guestCount).toInt();
     final addInfo = Uri.encodeComponent(_buildTransferContent());
     final accountName = Uri.encodeComponent(PaymentConfig.accountName);
 
@@ -157,7 +169,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     final qrUrl = _buildQrUrl();
     final transferContent = _buildTransferContent();
-    final amountText = _formatCurrency(trip.price);
+    final totalPrice = trip.price * widget.guestCount;
+    final amountText = _formatCurrency(totalPrice);
 
     return Scaffold(
       backgroundColor: paymentBackgroundColor,

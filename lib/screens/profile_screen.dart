@@ -7,6 +7,7 @@ import 'home_screen.dart';
 import 'explore_screen.dart';
 import 'saved_trips_screen.dart';
 import 'chat_screen.dart';
+import 'pending_bookings_screen.dart';
 
 const Color tealColor = Color(0xFF059AA6);
 
@@ -59,42 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         isLoadingStats = false;
       });
     }
-  }
-
-  Future<void> _handleResetData() async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Xác nhận đặt lại', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text('Bạn có chắc chắn muốn xóa toàn bộ lịch sử Booked Tours và các chuyến đi yêu thích không?'),
-          actions: [
-            TextButton(
-              child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              child: const Text('Xác nhận', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                Navigator.pop(context);
-                setState(() {
-                  isLoadingStats = true;
-                });
-                await _localStorageService.clearBookings();
-                await _localStorageService.clearFavorites();
-                await loadProfileStats();
-                if (mounted) {
-                  messenger.showSnackBar(
-                    const SnackBar(content: Text('Đã đặt lại toàn bộ dữ liệu ứng dụng về mặc định.')),
-                  );
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _handleLogout() {
@@ -229,18 +194,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       loadProfileStats();
                     },
                   ),
+                  _buildMenuItem(
+                    icon: Icons.pending_actions_rounded,
+                    title: 'Đang chờ duyệt',
+                    subtitle: 'Đơn đặt tour đang chờ admin xác nhận',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PendingBookingsScreen()),
+                      );
+                    },
+                  ),
                 ]),
                 const SizedBox(height: 20),
                 _buildSectionTitle('Hệ thống & Cài đặt'),
                 const SizedBox(height: 8),
                 _buildMenuCard([
-                  _buildMenuItem(
-                    icon: Icons.delete_sweep_rounded,
-                    title: 'Đặt lại dữ liệu',
-                    subtitle: 'Xóa danh sách đặt tour & yêu thích để test lại',
-                    iconColor: Colors.orange,
-                    onTap: _handleResetData,
-                  ),
                   _buildMenuItem(
                     icon: Icons.info_outline_rounded,
                     title: 'Về TravelApp',

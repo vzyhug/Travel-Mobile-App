@@ -44,6 +44,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  String _formatCurrency(num value) {
+    final amount = value.toInt();
+    final text = amount.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
+    );
+    return '$text đ';
+  }
+
   // ĐÃ SỬA LỖI NÚT START
   Future<void> _launchMaps(String address) async {
     final String encodedAddress = Uri.encodeComponent(address);
@@ -193,8 +202,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     Text(hotel.name, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold), maxLines: 1),
                     const SizedBox(height: 4),
                     Row(children: [const Icon(Icons.location_on_outlined, color: Colors.white70, size: 16), const SizedBox(width: 4), Expanded(child: Text(hotel.address, style: const TextStyle(color: Colors.white70), maxLines: 1))]),
-                    const SizedBox(height: 8),
-                    Text('${hotel.pricePerNight.toInt()} đ / đêm', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text('${_formatCurrency(hotel.pricePerNight)} / đêm', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                    ),
                   ],
                 ),
               ),

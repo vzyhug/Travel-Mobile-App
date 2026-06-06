@@ -3,6 +3,7 @@ import '../models/hotel_model.dart';
 import 'home_screen.dart';
 import 'saved_trips_screen.dart';
 import '../helper/local_storage_service.dart';
+import '../widgets/review_section.dart';
 import 'room_selection_screen.dart';
 
 class DetailExploreScreen extends StatefulWidget {
@@ -56,6 +57,15 @@ class _DetailExploreScreenState extends State<DetailExploreScreen> {
         builder: (context) => RoomSelectionScreen(hotel: widget.hotel),
       ),
     );
+  }
+
+  String _formatCurrency(num value) {
+    final amount = value.toInt();
+    final text = amount.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
+    );
+    return '$text đ';
   }
 
   @override
@@ -150,6 +160,8 @@ class _DetailExploreScreenState extends State<DetailExploreScreen> {
                           const Text("Mô tả", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 8),
                           Text(widget.hotel.description, style: const TextStyle(fontSize: 15, color: Colors.black54, height: 1.6)),
+                          const SizedBox(height: 24),
+                          ReviewSection(itemId: widget.hotel.id, itemType: 'hotel'),
                         ],
                       ),
                     ),
@@ -164,7 +176,10 @@ class _DetailExploreScreenState extends State<DetailExploreScreen> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(backgroundColor: tealColor, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
                               onPressed: goToRoomSelection,
-                              child: Text('Đặt ngay | ${widget.hotel.pricePerNight.toInt()} đ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Đặt ngay | ${_formatCurrency(widget.hotel.pricePerNight)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                              ),
                             ),
                           ),
                         ),
