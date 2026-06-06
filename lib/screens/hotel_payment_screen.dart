@@ -75,6 +75,9 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
       isConfirming = true;
     });
 
+    // Giả lập thời gian xử lý thanh toán để tăng tính xác thực cho User Experience
+    await Future.delayed(const Duration(seconds: 2));
+
     final bookingId = DateTime.now().millisecondsSinceEpoch.toString();
     // Tạo hóa đơn lưu vào LocalStorage
     final booking = LocalBookingModel(
@@ -118,12 +121,31 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
       hasBooked = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã hoàn tất đặt phòng tại ${widget.hotel.name}.')),
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Thanh toán thành công 🎉', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Đơn đặt phòng tại ${widget.hotel.name} của bạn đã được tiếp nhận và đang chờ duyệt. Cảm ơn bạn đã sử dụng dịch vụ!'),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: paymentPrimaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              if (mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
+            child: const Text('Trở về trang chủ', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
-
-    // Trả về trang trước đó
-    Navigator.pop(context, true);
   }
 
   String _formatCurrency(num value) {

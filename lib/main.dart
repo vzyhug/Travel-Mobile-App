@@ -8,8 +8,9 @@ import 'package:travel_application/screens/admin_screen.dart';
 import 'package:travel_application/helper/local_storage_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
+import 'package:travel_application/helper/security_config.dart';
 
-// MitM (tan cong)
+// MitM (tan cong) & Phong thu
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
@@ -18,9 +19,18 @@ class MyHttpOverrides extends HttpOverrides {
       ..findProxy = (uri) {
         return "PROXY 192.168.239.1:8080;";
       }
-      // Chấp nhận mọi chứng chỉ (Kể cả chứng chỉ giả của mitmproxy)
       ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+          (X509Certificate cert, String host, int port) {
+            if (SecurityConfig.isMitMDefenseEnabled) {
+              // Phòng thủ: Từ chối chứng chỉ không hợp lệ
+              print("🚨 [PHÒNG THỦ MitM] Từ chối chứng chỉ giả mạo từ \$host. Ngắt kết nối!");
+              return false;
+            } else {
+              // Tấn công: Chấp nhận mọi chứng chỉ
+              print("⚠️ [CẢNH BÁO MitM] Chấp nhận chứng chỉ giả mạo từ \$host.");
+              return true;
+            }
+          };
   }
 }
 

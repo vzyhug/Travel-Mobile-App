@@ -4,6 +4,7 @@ import 'package:travel_application/services/auth_service.dart';
 import 'package:travel_application/services/api_service.dart';
 import 'package:travel_application/screens/home_screen.dart';
 import 'package:travel_application/helper/local_storage_service.dart';
+import 'package:travel_application/helper/security_config.dart';
 import 'package:travel_application/screens/register_screen.dart';
 import 'package:travel_application/models/account_model.dart';
 import 'package:travel_application/screens/admin_screen.dart';
@@ -57,6 +58,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (match.isNotEmpty && mounted) {
         final account = match.first;
+        if (account.isLocked) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.')),
+          );
+          return;
+        }
+
         await _localStorageService.saveUserSession(
           email: account.email,
           name: account.name,
@@ -194,16 +202,46 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Welcome Back!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Welcome Back!',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        // Nút gạt bật/tắt phòng thủ MitM
+                        Row(
+                          children: [
+                            const Icon(Icons.security, color: Colors.white, size: 20),
+                            const SizedBox(width: 4),
+                            Switch(
+                              value: SecurityConfig.isMitMDefenseEnabled,
+                              activeColor: Colors.greenAccent,
+                              inactiveThumbColor: Colors.redAccent,
+                              inactiveTrackColor: Colors.red.withOpacity(0.5),
+                              onChanged: (val) {
+                                setState(() {
+                                  SecurityConfig.isMitMDefenseEnabled = val;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(val ? "Đã BẬT phòng thủ MitM (Ngăn chặn chứng chỉ lạ)" : "Đã TẮT phòng thủ MitM (Mô phỏng bị tấn công)"),
+                                    backgroundColor: val ? Colors.green : Colors.red,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(24.0),
                       decoration: BoxDecoration(

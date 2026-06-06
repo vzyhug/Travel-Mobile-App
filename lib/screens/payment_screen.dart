@@ -116,14 +116,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Thanh toán thành công 🎉', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Bạn đã đặt tour thành công. Bạn có muốn xem thêm khách sạn cho chuyến đi này không?'),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
+              Navigator.pop(dialogContext);
+              if (mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
             },
             child: const Text('Trở về trang chủ', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
@@ -134,7 +137,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () async {
-              Navigator.pop(context); // close dialog
+              Navigator.pop(dialogContext); // close dialog
               showDialog(
                 context: context,
                 barrierDismissible: false,

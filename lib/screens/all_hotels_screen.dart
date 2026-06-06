@@ -43,13 +43,14 @@ class _AllHotelsScreenState extends State<AllHotelsScreen> {
         }
       }
 
-      // 2. Tải danh sách các tour đã đặt để lấy location cho tính năng "Tham khảo"
+      // 2. Tải danh sách các tour đã đặt để lấy location cho tính năng "AI Trợ lý"
       final email = await LocalStorageService().getUserEmail();
       if (email != null) {
         final snapshot = await FirebaseFirestore.instance
             .collection('bookings')
             .where('userEmail', isEqualTo: email)
             .where('type', isEqualTo: 'trip')
+            .where('status', isEqualTo: 'Chờ duyệt')
             .get();
         final locations = snapshot.docs
             .map((doc) => doc.data()['location']?.toString() ?? '')
@@ -282,7 +283,7 @@ class _AllHotelsScreenState extends State<AllHotelsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'Bạn chưa đặt tour nào để tham khảo.',
+                              'Bạn chưa có tour nào đang chờ duyệt để AI phân tích.',
                             ),
                           ),
                         );
@@ -292,9 +293,9 @@ class _AllHotelsScreenState extends State<AllHotelsScreen> {
                           isReferenceMode = !isReferenceMode;
                         });
                       },
-                icon: const Icon(Icons.recommend, size: 20),
+                icon: const Icon(Icons.auto_awesome, size: 20),
                 label: Text(
-                  isReferenceMode ? 'Bỏ tham khảo' : 'Tham khảo',
+                  isReferenceMode ? 'Bỏ AI Gợi ý' : 'AI Trợ lý',
                   style: const TextStyle(fontSize: 13),
                 ),
                 style: ElevatedButton.styleFrom(

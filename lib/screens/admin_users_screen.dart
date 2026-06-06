@@ -4,12 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AdminUsersScreen extends StatelessWidget {
   const AdminUsersScreen({Key? key}) : super(key: key);
 
-  void _deleteUser(BuildContext context, String docId) {
+  void _toggleLockUser(BuildContext context, String docId, bool isCurrentlyLocked) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xác nhận xóa'),
-        content: const Text('Bạn có chắc chắn muốn xóa người dùng này?'),
+        title: Text(isCurrentlyLocked ? 'Xác nhận mở khóa' : 'Xác nhận khóa'),
+        content: Text(isCurrentlyLocked 
+          ? 'Bạn có chắc chắn muốn mở khóa người dùng này? Họ sẽ có thể đăng nhập lại.'
+          : 'Bạn có chắc chắn muốn khóa người dùng này? Họ sẽ không thể đăng nhập.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -18,10 +20,14 @@ class AdminUsersScreen extends StatelessWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await FirebaseFirestore.instance.collection('accounts').doc(docId).delete();
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã xóa người dùng')));
+              await FirebaseFirestore.instance.collection('accounts').doc(docId).update({
+                'isLocked': !isCurrentlyLocked,
+              });
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(isCurrentlyLocked ? 'Đã mở khóa người dùng' : 'Đã khóa người dùng')
+              ));
             },
-            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+            child: Text(isCurrentlyLocked ? 'Mở khóa' : 'Khóa', style: TextStyle(color: isCurrentlyLocked ? Colors.green : Colors.red)),
           ),
         ],
       ),
@@ -51,18 +57,19 @@ class AdminUsersScreen extends StatelessWidget {
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
+              final isLocked = data['isLocked'] == true;
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFF059AA6),
-                    child: Icon(Icons.person, color: Colors.white),
+                  leading: CircleAvatar(
+                    backgroundColor: isLocked ? Colors.red : const Color(0xFF059AA6),
+                    child: Icon(isLocked ? Icons.lock : Icons.person, color: Colors.white),
                   ),
                   title: Text(data['name'] ?? 'Không có tên', style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(data['email'] ?? 'Không có email'),
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteUser(context, docs[index].id),
+                    icon: Icon(isLocked ? Icons.lock_open : Icons.lock, color: isLocked ? Colors.green : Colors.red),
+                    onPressed: () => _toggleLockUser(context, docs[index].id, isLocked),
                   ),
                 ),
               );

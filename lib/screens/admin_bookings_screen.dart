@@ -82,10 +82,10 @@ class AdminBookingsScreen extends StatelessWidget {
                             Text('Trạng thái: $status', style: TextStyle(fontWeight: FontWeight.bold, color: status == 'Đã duyệt' ? Colors.green : (status == 'Đã hủy' ? Colors.red : Colors.orange))),
                           ],
                         ),
-                        trailing: IconButton(
+                        trailing: (status == 'Chờ duyệt') ? IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () => _deleteBooking(context, docs[index].id),
-                        ),
+                        ) : null,
                       ),
                       const SizedBox(height: 8),
                       Row(

@@ -5,6 +5,13 @@ import 'explore_screen.dart';
 import 'saved_trips_screen.dart';
 import 'profile_screen.dart';
 import '../services/gemini_service.dart';
+import '../models/trip_model.dart';
+import '../models/hotel_model.dart';
+import '../helper/trip_service.dart';
+import '../services/api_service.dart';
+import '../helper/local_storage_service.dart';
+import 'detail_explore_screen.dart';
+import 'trip_detail_screen.dart';
 
 const Color tealColor = Color(0xFF059AA6);
 
@@ -43,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
       "lastMessage":
           "Hôm nay thời tiết ở Sa Pa rất đẹp để đi leo núi Fansipan đó bạn!",
       "time": "10:42 AM",
-      "messages": [
+      "messages": <Map<String, dynamic>>[
         {
           "sender": "other",
           "text": "Xin chào! Mình là Elena, hướng dẫn viên du lịch của bạn.",
@@ -65,7 +72,7 @@ class _ChatScreenState extends State<ChatScreen> {
       "lastMessage":
           "Tôi có thể gợi ý các địa điểm ăn uống đặc sản tốt nhất tại Đà Nẵng.",
       "time": "Hôm qua",
-      "messages": [
+      "messages": <Map<String, dynamic>>[
         {
           "sender": "other",
           "text":
@@ -91,7 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
       "role": "Chăm sóc khách hàng",
       "lastMessage": "Yêu cầu hoàn trả đặt phòng của bạn đang được xử lý.",
       "time": "2 ngày trước",
-      "messages": [
+      "messages": <Map<String, dynamic>>[
         {
           "sender": "other",
           "text":
@@ -149,20 +156,78 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       if (name.contains("AI")) {
-        // Sao chép lịch sử để truyền ngữ cảnh cho Gemini
-        final localMessages = List<Map<String, dynamic>>.from(
-          activeThread!['messages'],
-        );
-        reply = await GeminiService().getChatResponse(localMessages);
+        final localMessages = List<Map<String, dynamic>>.from(activeThread!['messages']);
+        final aiResponse = await GeminiService().getSmartChatResponse(localMessages);
+        
+        reply = aiResponse['reply'] ?? '';
+        final action = aiResponse['action'];
+        
+        if (action == 'show_item') {
+          final itemId = aiResponse['itemId'];
+          final itemType = aiResponse['itemType'];
+          if (!mounted || activeThread == null) return;
+          setState(() {
+            activeThread!['messages'].add({
+              "sender": "other",
+              "text": reply,
+              "isWidget": true,
+              "itemId": itemId,
+              "itemType": itemType,
+            });
+            activeThread!['lastMessage'] = reply;
+            isTyping = false;
+          });
+          _scrollToBottom();
+          return;
+        } else if (action == 'show_items') {
+          final itemIds = aiResponse['itemIds'] as List<dynamic>?;
+          final itemType = aiResponse['itemType'];
+          if (!mounted || activeThread == null) return;
+          setState(() {
+            activeThread!['messages'].add({
+              "sender": "other",
+              "text": reply,
+              "isWidget": true,
+              "isMultiple": true,
+              "itemIds": itemIds,
+              "itemType": itemType,
+            });
+            activeThread!['lastMessage'] = reply;
+            isTyping = false;
+          });
+          _scrollToBottom();
+          return;
+        } else if (action == 'add_favorite') {
+          final itemIds = aiResponse['itemIds'];
+          final itemType = aiResponse['itemType'];
+          if (itemIds != null && itemIds is List) {
+            final localStorage = LocalStorageService();
+            for (var id in itemIds) {
+              if (itemType == 'hotel') {
+                 final hotelId = id.toString();
+                 final currentSaved = await localStorage.getFavoriteHotelIds();
+                 if (!currentSaved.contains(hotelId)) {
+                    await localStorage.toggleFavoriteHotel(hotelId);
+                 }
+              } else {
+                 final tripId = int.tryParse(id.toString()) ?? 0;
+                 if (tripId > 0) {
+                    final currentSaved = await localStorage.getFavoriteTripIds();
+                    if (!currentSaved.contains(tripId)) {
+                       await localStorage.toggleFavorite(tripId);
+                    }
+                 }
+              }
+            }
+            reply += "\n\n(Hệ thống đã tự động thêm các gợi ý vào danh sách Yêu thích của bạn! ❤️)";
+          }
+        }
       } else {
-        // Đợi 2 giây để giả lập người thật trả lời
         await Future.delayed(const Duration(seconds: 2));
         if (name.contains("Elena")) {
-          reply =
-              "Cảm ơn bạn đã nhắn tin cho Elena! Mình đang dẫn đoàn trekking bản Cát Cát một lát, mình sẽ tư vấn chi tiết lịch trình du lịch cho bạn ngay nhé! 🌲✨";
+          reply = "Cảm ơn bạn đã nhắn tin cho Elena! Mình đang dẫn đoàn trekking bản Cát Cát một lát, mình sẽ tư vấn chi tiết lịch trình du lịch cho bạn ngay nhé! 🌲✨";
         } else {
-          reply =
-              "Cảm ơn bạn. Bộ phận CSKH đã xác nhận thông tin. Chúng tôi sẽ cập nhật trạng thái đặt phòng của bạn trong mục Booked Tours trong giây lát.";
+          reply = "Cảm ơn bạn. Bộ phận CSKH đã xác nhận thông tin. Chúng tôi sẽ cập nhật trạng thái đặt phòng của bạn trong mục Booked Tours trong giây lát.";
         }
       }
     } catch (e) {
@@ -471,13 +536,22 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ],
                     ),
-                    child: Text(
-                      msg['text'],
-                      style: TextStyle(
-                        color: isUser ? Colors.white : Colors.black87,
-                        fontSize: 14,
-                        height: 1.35,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          msg['text'],
+                          style: TextStyle(
+                            color: isUser ? Colors.white : Colors.black87,
+                            fontSize: 14,
+                            height: 1.35,
+                          ),
+                        ),
+                        if (msg['isWidget'] == true && msg['isMultiple'] == true && msg['itemIds'] != null)
+                          ...((msg['itemIds'] as List).map((id) => _buildAIItemWidget(id, msg['itemType']))),
+                        if (msg['isWidget'] == true && msg['isMultiple'] != true && msg['itemId'] != null)
+                          _buildAIItemWidget(msg['itemId'], msg['itemType']),
+                      ],
                     ),
                   ),
                 );
@@ -634,5 +708,84 @@ class _ChatScreenState extends State<ChatScreen> {
         }),
       ),
     );
+  }
+
+  Widget _buildAIItemWidget(String itemId, String itemType) {
+    if (itemType == 'trip') {
+      return FutureBuilder<List<TripModel>>(
+        future: TripService().getTrips(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const SizedBox.shrink();
+          try {
+            final trip = snapshot.data!.firstWhere((t) => t.id.toString() == itemId.toString());
+            return GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TripDetailScreen(trip: trip, isFavorite: false))),
+              child: Container(
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.blue.shade200)),
+                child: Row(
+                  children: [
+                    ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.network(trip.imageUrl.isNotEmpty ? trip.imageUrl : 'https://via.placeholder.com/150', width: 60, height: 60, fit: BoxFit.cover)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(trip.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Text('💰 ${trip.price}đ', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.blue),
+                  ],
+                ),
+              ),
+            );
+          } catch (e) {
+            return const SizedBox.shrink();
+          }
+        },
+      );
+    } else if (itemType == 'hotel') {
+      return FutureBuilder<List<HotelModel>>(
+        future: ApiService.fetchHotels(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const SizedBox.shrink();
+          try {
+            final hotel = snapshot.data!.firstWhere((h) => h.id.toString() == itemId.toString());
+            return GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetailExploreScreen(hotel: hotel))),
+              child: Container(
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.orange.shade200)),
+                child: Row(
+                  children: [
+                    ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.network(hotel.imageUrls.isNotEmpty ? hotel.imageUrls.first : 'https://via.placeholder.com/150', width: 60, height: 60, fit: BoxFit.cover)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(hotel.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Text('🏨 ${hotel.pricePerNight}đ/đêm', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.orange),
+                  ],
+                ),
+              ),
+            );
+          } catch (e) {
+            return const SizedBox.shrink();
+          }
+        },
+      );
+    }
+    return const SizedBox.shrink();
   }
 }

@@ -244,6 +244,145 @@ class _AdminScreenState extends State<AdminScreen> {
     _showAIResultDialog('Kết quả xử lý tự động', summary);
   }
 
+  void _runAIBookingAnalysis() async {
+    Navigator.pop(context);
+    _showAILoadingDialog('Đang quét spam và duyệt đơn tự động...');
+    final aiService = AiAssistantService();
+    final evaluations = await aiService.analyzeAllPendingBookings();
+    
+    if (evaluations == null) {
+      Navigator.pop(context);
+      _showAIResultDialog('Lỗi', 'Lỗi khi quét đơn đặt bằng AI.');
+      return;
+    }
+    if (evaluations.isEmpty) {
+      Navigator.pop(context);
+      _showAIResultDialog('Kiểm duyệt đơn', 'Không có đơn nào đang chờ duyệt.');
+      return;
+    }
+
+    int approved = 0;
+    int rejected = 0;
+    StringBuffer report = StringBuffer();
+
+    for (var eval in evaluations) {
+      if (eval['status'] == 'Valid') {
+        await FirebaseFirestore.instance.collection('bookings').doc(eval['id']).update({'status': 'Đã duyệt'});
+        approved++;
+        report.writeln('✅ **Duyệt:** ${eval['customerName']} đặt "${eval['tripName']}"');
+        report.writeln('*(Lý do: ${eval['reason']})*\n');
+      } else {
+        await FirebaseFirestore.instance.collection('bookings').doc(eval['id']).update({'status': 'Đã hủy'});
+        rejected++;
+        report.writeln('🚫 **Hủy (Spam):** ${eval['customerName']} đặt "${eval['tripName']}"');
+        report.writeln('*(Lý do: ${eval['reason']})*\n');
+      }
+    }
+
+    Navigator.pop(context); // close loading
+
+    String summary = '### Báo cáo Duyệt Đơn tự động\n\n'
+        '**Tổng đơn:** ${evaluations.length}\n'
+        '- **Đã duyệt hợp lệ:** $approved\n'
+        '- **Đã hủy (Spam/Lỗi):** $rejected\n\n'
+        '---\n\n' + report.toString();
+
+    _showAIResultDialog('Kết quả Duyệt Đơn', summary);
+  }
+
+  void _showNotificationsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.75,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10))),
+                const SizedBox(height: 16),
+                const Text('Thông báo hệ thống', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const TabBar(
+                  labelColor: Colors.teal,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.teal,
+                  tabs: [
+                    Tab(text: 'Đơn chờ duyệt'),
+                    Tab(text: 'Đánh giá chờ duyệt'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      // Tab Đơn
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance.collection('bookings').where('status', isEqualTo: 'Chờ duyệt').snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                          final docs = snapshot.data!.docs;
+                          if (docs.isEmpty) return const Center(child: Text('Không có đơn nào chờ duyệt.'));
+                          return ListView.builder(
+                            itemCount: docs.length,
+                            itemBuilder: (context, index) {
+                              final data = docs[index].data() as Map<String, dynamic>;
+                              final name = data['customerName'] ?? data['userEmail'] ?? 'Khách';
+                              final timeStr = data['bookedAt'];
+                              final time = timeStr != null ? DateTime.tryParse(timeStr) : null;
+                              final timeDisplay = time != null ? '${time.hour}:${time.minute.toString().padLeft(2, '0')} ${time.day}/${time.month}' : '';
+                              return ListTile(
+                                leading: const CircleAvatar(backgroundColor: Colors.teal, child: Icon(Icons.receipt_long, color: Colors.white, size: 20)),
+                                title: const Text('Đơn đặt phòng/tour mới', style: TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text('Khách hàng $name vừa yêu cầu duyệt đơn lúc $timeDisplay.'),
+                                isThreeLine: true,
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      // Tab Đánh giá
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance.collection('reviews').where('status', isEqualTo: 'pending').snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                          final docs = snapshot.data!.docs;
+                          if (docs.isEmpty) return const Center(child: Text('Không có đánh giá nào chờ duyệt.'));
+                          return ListView.builder(
+                            itemCount: docs.length,
+                            itemBuilder: (context, index) {
+                              final data = docs[index].data() as Map<String, dynamic>;
+                              final name = data['userName'] ?? 'Khách';
+                              final timeStr = data['createdAt'];
+                              final time = timeStr != null ? DateTime.tryParse(timeStr) : null;
+                              final timeDisplay = time != null ? '${time.hour}:${time.minute.toString().padLeft(2, '0')} ${time.day}/${time.month}' : '';
+                              return ListTile(
+                                leading: const CircleAvatar(backgroundColor: Colors.orange, child: Icon(Icons.star, color: Colors.white, size: 20)),
+                                title: const Text('Đánh giá mới chờ duyệt', style: TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text('Khách hàng $name vừa yêu cầu duyệt đánh giá lúc $timeDisplay.'),
+                                isThreeLine: true,
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showAILoadingDialog(String message) {
     showDialog(
       context: context,
@@ -343,6 +482,15 @@ class _AdminScreenState extends State<AdminScreen> {
                     subtitle: const Text('AI tự động duyệt hoặc từ chối đánh giá'),
                     onTap: _runAIReviewAnalysis,
                   ),
+                  ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: Colors.teal,
+                      child: Icon(Icons.receipt_long, color: Colors.white, size: 20),
+                    ),
+                    title: const Text('Tự động Duyệt Đơn Đặt (Booking)'),
+                    subtitle: const Text('AI quét đơn ảo, spam và tự động duyệt đơn thật'),
+                    onTap: _runAIBookingAnalysis,
+                  ),
                   const SizedBox(height: 16),
                 ],
               ),
@@ -361,8 +509,19 @@ class _AdminScreenState extends State<AdminScreen> {
         backgroundColor: const Color(0xfff6f9fa),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black, size: 28),
-          onPressed: () {},
+          icon: const Icon(Icons.logout, color: Colors.black, size: 28),
+          onPressed: () async {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('logged_in_user_email');
+            await prefs.remove('logged_in_user_name');
+            await prefs.remove('logged_in_user_role');
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            }
+          },
         ),
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,37 +541,52 @@ class _AdminScreenState extends State<AdminScreen> {
           ],
         ),
         actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.notifications_outlined,
-                  color: Colors.black,
-                  size: 28,
-                ),
-                onPressed: () {},
-              ),
-              Positioned(
-                right: 8,
-                top: 10,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text(
-                    '12',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('bookings').where('status', isEqualTo: 'Chờ duyệt').snapshots(),
+            builder: (context, bookingSnap) {
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('reviews').where('status', isEqualTo: 'pending').snapshots(),
+                builder: (context, reviewSnap) {
+                  int bCount = bookingSnap.data?.docs.length ?? 0;
+                  int rCount = reviewSnap.data?.docs.length ?? 0;
+                  int total = bCount + rCount;
+                  
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.black,
+                          size: 28,
+                        ),
+                        onPressed: () => _showNotificationsSheet(context),
+                      ),
+                      if (total > 0)
+                        Positioned(
+                          right: 8,
+                          top: 10,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              total > 99 ? '99+' : total.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              );
+            },
           ),
           GestureDetector(
             onTap: () async {

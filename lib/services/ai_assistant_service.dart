@@ -109,4 +109,51 @@ ${jsonEncode(reviewsData)}
       return null; // Null đại diện cho lỗi
     }
   }
+
+  Future<List<Map<String, dynamic>>?> analyzeAllPendingBookings() async {
+    try {
+      final db = FirebaseFirestore.instance;
+      final snaps = await db.collection('bookings').where('status', isEqualTo: 'Chờ duyệt').get();
+      if (snaps.docs.isEmpty) return [];
+
+      final dataList = snaps.docs.map((doc) => {'id': doc.id, 'content': doc.data()}).toList();
+
+      final prompt = '''
+Bạn là hệ thống kiểm duyệt đơn đặt phòng/tour tự động.
+Dưới đây là danh sách các đơn "Chờ duyệt" (JSON).
+Đánh giá từng đơn: nếu thông tin (tên, email, số lượng người, giá tiền) có vẻ hợp lý và là đơn thật, hãy đánh dấu là "Valid". Nếu là dữ liệu rác, spam, giả mạo, hoặc bất hợp lý, đánh dấu "Spam".
+Trả về mảng JSON nghiêm ngặt:
+[
+  { "id": "id", "status": "Valid" | "Spam", "reason": "Lý do ngắn gọn" }
+]
+Danh sách:
+${jsonEncode(dataList)}
+''';
+
+      final content = [Content.text(prompt)];
+      final response = await _model.generateContent(content);
+      String jsonStr = (response.text ?? '[]').replaceAll('```json', '').replaceAll('```', '').trim();
+      List<dynamic> evaluations = jsonDecode(jsonStr);
+
+      List<Map<String, dynamic>> finalResult = [];
+      for (var eval in evaluations) {
+        String docId = eval['id'] ?? '';
+        var originalDoc = dataList.firstWhere((e) => e['id'] == docId, orElse: () => {});
+        if (originalDoc.isNotEmpty) {
+          final d = originalDoc['content'] as Map<String, dynamic>;
+          finalResult.add({
+            'id': docId,
+            'status': eval['status'] ?? 'Valid',
+            'reason': eval['reason'] ?? '',
+            'customerName': d['customerName'] ?? d['userEmail'] ?? 'Khách',
+            'tripName': d['tripName'] ?? d['hotelName'] ?? 'Dịch vụ',
+          });
+        }
+      }
+      return finalResult;
+    } catch (e) {
+      print('Lỗi AI Booking: $e');
+      return null;
+    }
+  }
 }
