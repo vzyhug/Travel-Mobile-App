@@ -164,7 +164,7 @@ class _DetailExploreScreenState extends State<DetailExploreScreen> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(backgroundColor: tealColor, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
                               onPressed: goToRoomSelection,
-                              child: Text('Book Now | ${widget.hotel.pricePerNight.toInt()}đ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                              child: Text('Đặt ngay | ${widget.hotel.pricePerNight.toInt()} đ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                             ),
                           ),
                         ),

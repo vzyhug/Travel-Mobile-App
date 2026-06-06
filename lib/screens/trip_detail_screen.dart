@@ -79,7 +79,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   void showAlreadyBookedMessage() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Bạn đã booking trip này rồi.'),
+        content: Text('Bạn đã đặt tour này rồi.'),
       ),
     );
   }
@@ -103,7 +103,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Booking Successful',
+                'Đặt tour thành công',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -111,7 +111,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'You booked ${widget.trip.name} for \$${widget.trip.price}.',
+                'Bạn đã đặt ${widget.trip.name} với giá ${widget.trip.price.toInt()} đ.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.grey.shade600,
@@ -134,7 +134,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     Navigator.pop(context);
                   },
                   child: const Text(
-                    'Done',
+                    'Hoàn tất',
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -335,7 +335,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
   Widget _buildDescription(TripModel trip) {
     return Text(
-      'What is ${trip.name} known for?\n${trip.description}',
+      '${trip.name} có gì nổi bật?\n${trip.description}',
       style: TextStyle(
         color: Colors.grey.shade700,
         fontSize: 15,
@@ -371,8 +371,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     )
                   : Text(
                       hasBooked
-                          ? 'Booked | \$${trip.price}'
-                          : 'Booking Now | \$${trip.price}',
+                          ? 'Đã đặt | ${trip.price.toInt()} đ'
+                          : 'Đặt ngay | ${trip.price.toInt()} đ',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,

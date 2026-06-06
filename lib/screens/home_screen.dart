@@ -33,11 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
   List<HotelModel> topHotels = [];
   Set<int> favoriteTripIds = {};
 
-  String selectedCategory = 'All';
+  String selectedCategory = 'Tất cả';
   int selectedBottomIndex = 0;
   bool showAllTopTrips = false;
 
-  final List<String> categories = ['All', 'Lakes', 'Sea', 'Mountain', 'Forest'];
+  final List<String> categories = ['Tất cả', 'Hồ', 'Biển', 'Núi', 'Rừng'];
 
   @override
   void initState() {
@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final keyword = _searchController.text.trim().toLowerCase();
 
     return trips.where((trip) {
-      final matchCategory = selectedCategory == 'All' || trip.category == selectedCategory;
+      final matchCategory = selectedCategory == 'Tất cả' || trip.category == selectedCategory;
 
       final matchSearch = trip.name.toLowerCase().contains(keyword) ||
           trip.location.toLowerCase().contains(keyword) ||
@@ -94,13 +94,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool get hasActiveFilter {
-    return selectedCategory != 'All' || _searchController.text.trim().isNotEmpty;
+    return selectedCategory != 'Tất cả' || _searchController.text.trim().isNotEmpty;
   }
 
   void clearFilters() {
     FocusScope.of(context).unfocus();
     setState(() {
-      selectedCategory = 'All';
+      selectedCategory = 'Tất cả';
       _searchController.clear();
       showAllTopTrips = false;
     });
@@ -187,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 22),
           _buildSearchAndFilter(),
           const SizedBox(height: 20),
-          _buildSectionTitle('Categories'),
+          _buildSectionTitle('Danh mục'),
           const SizedBox(height: 12),
           _buildCategories(),
           if (hasActiveFilter) ...[
@@ -196,8 +196,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           const SizedBox(height: 22),
           _buildSectionTitle(
-            'Top Trips',
-            showAllTopTrips ? 'Show less' : 'See All',
+            'Tour hàng đầu',
+            showAllTopTrips ? 'Thu gọn' : 'Xem tất cả',
             () {
               setState(() {
                 showAllTopTrips = !showAllTopTrips;
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildTopTrips(topTrips),
           const SizedBox(height: 22),
           _buildSectionTitle(
-            'Top 3 Hotels',
+            'Top 3 Khách sạn',
             '',
             () {},
           ),
@@ -227,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Location',
+                'Địa điểm',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      'New York, USA',
+                      'TP. Hồ Chí Minh, VN',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
@@ -309,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: _searchController,
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
-                hintText: 'Search',
+                hintText: 'Tìm kiếm',
                 border: InputBorder.none,
                 prefixIcon: Icon(Icons.search),
                 contentPadding: EdgeInsets.only(top: 12),
@@ -346,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildClearFilterChip() {
-    final label = selectedCategory == 'All'
+    final label = selectedCategory == 'Tất cả'
         ? 'Đang tìm kiếm'
         : 'Đang lọc: $selectedCategory';
 
@@ -466,13 +466,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   IconData _categoryIcon(String category) {
     switch (category) {
-      case 'All':
+      case 'Tất cả':
         return Icons.apps;
-      case 'Sea':
+      case 'Biển':
         return Icons.water;
-      case 'Mountain':
+      case 'Núi':
         return Icons.terrain;
-      case 'Forest':
+      case 'Rừng':
         return Icons.forest;
       default:
         return Icons.pool;
@@ -485,7 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 150,
         child: Center(
           child: Text(
-            'No trips found',
+            'Không tìm thấy tour nào',
             style: TextStyle(color: Colors.grey),
           ),
         ),
@@ -594,14 +594,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       Text(
-                        '\$${trip.price}',
+                        '${trip.price.toInt()} đ',
                         style: const TextStyle(
                           color: primaryColor,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const Text(
-                        ' /Visit',
+                        ' / chuyến',
                         style: TextStyle(fontSize: 11),
                       ),
                       const Spacer(),
@@ -626,7 +626,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTopHotels() {
     if (topHotels.isEmpty) {
       return const Text(
-        'No hotels available',
+        'Không có khách sạn nào',
         style: TextStyle(color: Colors.grey),
       );
     }
@@ -711,7 +711,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const Spacer(),
                           Text(
-                            '\$${hotel.pricePerNight}',
+                            '${hotel.pricePerNight.toInt()} đ',
                             style: const TextStyle(
                               color: primaryColor,
                               fontSize: 14,
@@ -719,7 +719,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const Text(
-                            '/Night',
+                            '/đêm',
                             style: TextStyle(
                               color: Colors.grey,
                               fontSize: 11,
