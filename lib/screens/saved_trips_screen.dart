@@ -230,26 +230,70 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
   }
 
   Widget _buildBottomNav() {
-    final icons = [Icons.home, Icons.location_on, Icons.chat_bubble, Icons.favorite, Icons.person];
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: savedPrimaryColor,
-      unselectedItemColor: Colors.grey,
-      currentIndex: 3,
-      onTap: (index) {
-        if (index == 3) return;
-        if (index == 0) navigateToTab(context, const HomeScreen());
-        else if (index == 1) navigateToTab(context, const ExploreScreen());
-        else if (index == 2) navigateToTab(context, const ChatScreen());
-        else if (index == 4) navigateToTab(context, const ProfileScreen());
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Explore'),
-        BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: 'Chat'),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Wishlist'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
+    int selectedBottomIndex = 3;
+    final List<IconData> icons = [
+      Icons.home_filled,
+      Icons.location_on,
+      Icons.chat_bubble_rounded,
+      Icons.favorite_rounded,
+      Icons.person_rounded,
+    ];
+
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(icons.length, (index) {
+          final selected = selectedBottomIndex == index;
+
+          return GestureDetector(
+            onTap: () {
+              if (selected) return;
+
+              if (index == 0) {
+                navigateToTab(context, const HomeScreen());
+              } else if (index == 1) {
+                navigateToTab(context, const ExploreScreen());
+              } else if (index == 2) {
+                navigateToTab(context, const ChatScreen());
+              } else if (index == 3) {
+                // Đang ở SavedTripsScreen thì không làm gì
+              } else if (index == 4) {
+                navigateToTab(context, const ProfileScreen());
+              }
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icons[index],
+                  color: selected ? savedPrimaryColor : Colors.grey,
+                  size: 27,
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: selected ? savedPrimaryColor : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 

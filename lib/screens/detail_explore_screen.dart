@@ -71,12 +71,27 @@ class _DetailExploreScreenState extends State<DetailExploreScreen> {
           Positioned.fill(
             child: Stack(
               children: [
-                Image.network(
-                  bgImageUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                ),
+                bgImageUrl.trim().startsWith('http://') || bgImageUrl.trim().startsWith('https://')
+                    ? Image.network(
+                        bgImageUrl.trim(),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.hotel, size: 80, color: Colors.grey),
+                        ),
+                      )
+                    : Image.asset(
+                        bgImageUrl.trim().isEmpty ? 'assets/images/default_hotel.png' : bgImageUrl.trim(),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.hotel, size: 80, color: Colors.grey),
+                        ),
+                      ),
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(

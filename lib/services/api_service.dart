@@ -1,31 +1,15 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:travel_application/models/account_model.dart';
 import '../models/hotel_model.dart';
 import '../models/room_model.dart';
 
 class ApiService {
-  // Endpoint của Accounts
-  static const String _accountsUrl = 'https://my-json-server.typicode.com/vzyhug/data-accounts';
-
-  // Endpoint của Hotels
-  static const String _hotelsUrl = 'https://my-json-server.typicode.com/vzyhug/data-travel-hotels';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<List<Account>> fetchAccounts() async {
     try {
-      final response = await http.get(Uri.parse('$_accountsUrl/accounts'));
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonList = json.decode(response.body);
-        List<Account> accounts = jsonList
-            .map((json) => Account.fromJson(json))
-            .toList();
-        return accounts;
-      } else {
-        throw Exception(
-          'Failed to load accounts. Status Code: ${response.statusCode}',
-        );
-      }
+      final snapshot = await _firestore.collection('accounts').get();
+      return snapshot.docs.map((doc) => Account.fromFirestore(doc)).toList();
     } catch (e) {
       throw Exception('Error fetching accounts: $e');
     }
@@ -33,35 +17,18 @@ class ApiService {
 
   Future<bool> registerAccount(Account account) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_accountsUrl/accounts'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(account.toJson()),
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return true;
-      } else {
-        print('Mock API Register return status code: ${response.statusCode}');
-        return false;
-      }
+      await _firestore.collection('accounts').add(account.toJson());
+      return true;
     } catch (e) {
-      print('Error calling mock register API: $e');
+      print('Error calling firestore register: $e');
       return false;
     }
   }
 
   static Future<List<HotelModel>> fetchHotels() async {
     try {
-      final response = await http.get(Uri.parse('$_hotelsUrl/hotels'));
-
-      if (response.statusCode == 200) {
-        final String decodedBody = utf8.decode(response.bodyBytes);
-        List<dynamic> data = json.decode(decodedBody);
-        return data.map((json) => HotelModel.fromJson(json)).toList();
-      } else {
-        throw Exception('Error server: ${response.statusCode}');
-      }
+      final snapshot = await FirebaseFirestore.instance.collection('hotels').get();
+      return snapshot.docs.map((doc) => HotelModel.fromFirestore(doc)).toList();
     } catch (e) {
       print("Error fetching data from API Hotels: $e");
       return [];
@@ -70,15 +37,8 @@ class ApiService {
 
   static Future<List<RoomModel>> fetchRooms() async {
     try {
-      final response = await http.get(Uri.parse('$_hotelsUrl/rooms'));
-
-      if (response.statusCode == 200) {
-        final String decodedBody = utf8.decode(response.bodyBytes);
-        List<dynamic> data = json.decode(decodedBody);
-        return data.map((json) => RoomModel.fromJson(json)).toList();
-      } else {
-        throw Exception('Error server: ${response.statusCode}');
-      }
+      final snapshot = await FirebaseFirestore.instance.collection('rooms').get();
+      return snapshot.docs.map((doc) => RoomModel.fromFirestore(doc)).toList();
     } catch (e) {
       print("Error fetching data from API Rooms: $e");
       return [];

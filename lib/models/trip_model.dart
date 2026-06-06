@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TripModel {
   final int id;
   final String name;
@@ -54,6 +56,34 @@ class TripModel {
     );
   }
 
+  factory TripModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final location = (data['location'] ?? '').toString();
+    final locationParts = location
+        .split(',')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
+    return TripModel(
+      id: data['id'] != null ? _toInt(data['id']) : doc.id.hashCode,
+      name: (data['name'] ?? data['title'] ?? '').toString(),
+      category: (data['category'] ?? '').toString(),
+      type: (data['type'] ?? '').toString(),
+      duration: (data['duration'] ?? '').toString(),
+      location: location,
+      country:
+          (data['country'] ??
+                  (locationParts.isNotEmpty ? locationParts.last : ''))
+              .toString(),
+      imageUrl: (data['imageUrl'] ?? data['image'] ?? '').toString(),
+      rating: _toDouble(data['rating']),
+      price: _toInt(data['price']),
+      description: (data['description'] ?? '').toString(),
+      gallery: List<String>.from(data['gallery'] ?? []),
+    );
+  }
+
   static int _toInt(dynamic value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -83,3 +113,4 @@ class TripModel {
     };
   }
 }
+

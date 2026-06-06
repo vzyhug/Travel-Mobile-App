@@ -10,12 +10,15 @@ class AuthService {
   Future<UserCredential?> signInWithGoogle() async {
     try {
       // Bước 1: Xác thực người dùng (thay thế signIn cũ)
-      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
+      final GoogleSignInAccount? googleUser = await _googleSignIn
+          .authenticate();
       if (googleUser == null) return null;
 
       // Bước 2: Lấy accessToken qua authorizationClient (QUAN TRỌNG)
       const List<String> scopes = ['email', 'profile'];
-      final clientAuth = await googleUser.authorizationClient.authorizeScopes(scopes);
+      final clientAuth = await googleUser.authorizationClient.authorizeScopes(
+        scopes,
+      );
 
       // Bước 3: Lấy idToken từ authentication (accessToken lấy từ clientAuth)
       final googleAuth = await googleUser.authentication;
@@ -23,7 +26,7 @@ class AuthService {
       // Bước 4: Tạo credential cho Firebase
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
-        accessToken: clientAuth.accessToken,   //  accessToken hợp lệ
+        accessToken: clientAuth.accessToken, //  accessToken hợp lệ
       );
 
       return await _auth.signInWithCredential(credential);
@@ -67,6 +70,7 @@ class AuthService {
     await _auth.signOut();
   }
 }
+
 //
 // extension on GoogleSignInAuthentication {
 //   String? get accessToken => null;

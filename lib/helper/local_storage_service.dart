@@ -105,11 +105,13 @@ class LocalStorageService {
 
   static const String _userEmailKey = 'logged_in_user_email';
   static const String _userNameKey = 'logged_in_user_name';
+  static const String _userRoleKey = 'logged_in_user_role';
 
-  Future<void> saveUserSession({required String email, required String name}) async {
+  Future<void> saveUserSession({required String email, required String name, String role = 'user'}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userEmailKey, email);
     await prefs.setString(_userNameKey, name);
+    await prefs.setString(_userRoleKey, role);
   }
 
   Future<String?> getUserEmail() async {
@@ -122,10 +124,16 @@ class LocalStorageService {
     return prefs.getString(_userNameKey);
   }
 
+  Future<String?> getUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userRoleKey);
+  }
+
   Future<void> clearUserSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userEmailKey);
     await prefs.remove(_userNameKey);
+    await prefs.remove(_userRoleKey);
   }
 
   static const String _localAccountsKey = 'local_registered_accounts';
