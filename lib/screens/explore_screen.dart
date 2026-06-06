@@ -109,7 +109,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () => _launchMaps(_hotels[_currentPage].address),
                   icon: const Icon(Icons.near_me, color: Colors.white),
-                  label: const Text('Start', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  label: const Text('Bắt đầu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(backgroundColor: tealColor, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: const StadiumBorder()),
                 ),
               ),
@@ -126,7 +126,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Explore', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
+                    const Text('Khám phá', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
                     const SizedBox(height: 8),
                     Row(
                       children: List.generate(_hotels.length, (index) => AnimatedContainer(
@@ -194,7 +194,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     const SizedBox(height: 4),
                     Row(children: [const Icon(Icons.location_on_outlined, color: Colors.white70, size: 16), const SizedBox(width: 4), Expanded(child: Text(hotel.address, style: const TextStyle(color: Colors.white70), maxLines: 1))]),
                     const SizedBox(height: 8),
-                    Text('\$${hotel.pricePerNight} / đêm', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                    Text('${hotel.pricePerNight.toInt()} đ / đêm', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../config/payment_config.dart';
 import '../helper/local_storage_service.dart';
@@ -58,9 +59,10 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
       isConfirming = true;
     });
 
+    final bookingId = DateTime.now().millisecondsSinceEpoch.toString();
     // Tạo hóa đơn lưu vào LocalStorage
     final booking = LocalBookingModel(
-      bookingId: DateTime.now().millisecondsSinceEpoch.toString(),
+      bookingId: bookingId,
       tripId: widget.hotel.id,
       // Ghép tên khách sạn và tên phòng để hiển thị cho rõ ràng
       tripName: '${widget.hotel.name} (${widget.room.type})',
@@ -71,6 +73,24 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
     );
 
     await _localStorageService.addBooking(booking);
+
+    try {
+      final email = await _localStorageService.getUserEmail();
+      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).set({
+        'bookingId': bookingId,
+        'userEmail': email ?? 'unknown',
+        'tripId': widget.hotel.id,
+        'tripName': '${widget.hotel.name} (${widget.room.type})',
+        'price': widget.room.price,
+        'location': widget.hotel.address,
+        'imageUrl': booking.imageUrl,
+        'bookedAt': DateTime.now().toIso8601String(),
+        'status': 'Chờ duyệt',
+        'type': 'hotel',
+      });
+    } catch (e) {
+      debugPrint('Lỗi lưu Firestore: $e');
+    }
 
     if (!mounted) return;
 

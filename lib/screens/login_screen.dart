@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Đăng nhập thành công!')),
           );
-          if (account.role == 'admin' || account.email == 'admin@gmail.com') {
+          if (account.role == 'admin' || account.email == 'admin@example.com') {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const AdminScreen()),

@@ -117,20 +117,20 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
           if (!hasAnySaved) _buildEmptyState(),
 
           if (savedHotels.isNotEmpty) ...[
-            _buildSectionTitle('Saved Hotels'),
+            _buildSectionTitle('Khách sạn đã lưu'),
             const SizedBox(height: 14),
             ...savedHotels.map(_buildSavedHotelCard),
             const SizedBox(height: 22),
           ],
 
           if (eventTrips.isNotEmpty) ...[
-            _buildSectionTitle('Saved Events'),
+            _buildSectionTitle('Sự kiện đã lưu'),
             const SizedBox(height: 14),
             ...eventTrips.map(_buildSavedTripCard),
             const SizedBox(height: 22),
           ],
           if (packageTrips.isNotEmpty) ...[
-            _buildSectionTitle('Saved Packages'),
+            _buildSectionTitle('Gói tour đã lưu'),
             const SizedBox(height: 14),
             ...packageTrips.map(_buildSavedTripCard),
             const SizedBox(height: 22),
@@ -149,7 +149,7 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
             onTap: () => Navigator.pop(context),
             child: Container(width: 38, height: 38, decoration: BoxDecoration(color: Colors.grey.shade50, shape: BoxShape.circle), child: const Icon(Icons.arrow_back, size: 22)),
           ),
-          const Expanded(child: Text('Saved Trips', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+          const Expanded(child: Text('Đã lưu', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
           const SizedBox(width: 38),
         ],
       ),
@@ -166,7 +166,7 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
         children: [
           Icon(Icons.favorite_border, size: 72, color: Colors.grey.shade300),
           const SizedBox(height: 14),
-          const Text('No saved trips yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const Text('Chưa có danh mục nào được lưu', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -191,7 +191,7 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
                   const SizedBox(height: 5),
                   Text(hotel.address, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
                   const SizedBox(height: 6),
-                  Text('${hotel.pricePerNight.toInt()}đ / Night', style: const TextStyle(color: savedPrimaryColor, fontSize: 12, fontWeight: FontWeight.w800)),
+                  Text('${hotel.pricePerNight.toInt()} đ / đêm', style: const TextStyle(color: savedPrimaryColor, fontSize: 12, fontWeight: FontWeight.w800)),
                 ],
               ),
             ),
@@ -219,7 +219,7 @@ class _SavedTripsScreenState extends State<SavedTripsScreen> {
                   const SizedBox(height: 5),
                   Text(trip.location, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
                   const SizedBox(height: 6),
-                  Text('\$${trip.price} /Visit', style: const TextStyle(color: savedPrimaryColor, fontSize: 12, fontWeight: FontWeight.w800)),
+                  Text('${trip.price.toInt()} đ / chuyến', style: const TextStyle(color: savedPrimaryColor, fontSize: 12, fontWeight: FontWeight.w800)),
                 ],
               ),
             ),

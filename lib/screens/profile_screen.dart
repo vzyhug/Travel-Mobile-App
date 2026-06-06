@@ -207,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuCard([
                   _buildMenuItem(
                     icon: Icons.bookmark_added_rounded,
-                    title: 'Booked Tours',
+                    title: 'Tour đã đặt',
                     subtitle: 'Danh sách tour đã hoàn tất chuyển khoản',
                     onTap: () async {
                       await Navigator.push(
@@ -219,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   _buildMenuItem(
                     icon: Icons.favorite_rounded,
-                    title: 'Favorites Wishlist',
+                    title: 'Danh sách yêu thích',
                     subtitle: 'Các địa điểm bạn đã thả tim',
                     onTap: () async {
                       await Navigator.push(

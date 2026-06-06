@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../config/payment_config.dart';
 import '../helper/local_storage_service.dart';
@@ -56,8 +57,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       isConfirming = true;
     });
 
+    final bookingId = DateTime.now().millisecondsSinceEpoch.toString();
     final booking = LocalBookingModel(
-      bookingId: DateTime.now().millisecondsSinceEpoch.toString(),
+      bookingId: bookingId,
       tripId: widget.trip.id.toString(),
       tripName: widget.trip.name,
       price: widget.trip.price.toDouble(),
@@ -67,6 +69,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
 
     await _localStorageService.addBooking(booking);
+
+    try {
+      final email = await _localStorageService.getUserEmail();
+      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).set({
+        'bookingId': bookingId,
+        'userEmail': email ?? 'unknown',
+        'tripId': widget.trip.id.toString(),
+        'tripName': widget.trip.name,
+        'price': widget.trip.price.toDouble(),
+        'location': widget.trip.location,
+        'imageUrl': widget.trip.imageUrl,
+        'bookedAt': DateTime.now().toIso8601String(),
+        'status': 'Chờ duyệt',
+        'type': 'trip',
+      });
+    } catch (e) {
+      debugPrint('Lỗi lưu Firestore: $e');
+    }
 
     if (!mounted) return;
 
