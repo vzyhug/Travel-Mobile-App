@@ -8,7 +8,7 @@ import '../services/api_service.dart';
 import '../helper/trip_service.dart';
 
 class GeminiService {
-  static const String _apiKey = 'AQ.Ab8RN6KmNSoIVj0_A96rkoH6GJOtgIRezdCqB-8Hp7AJAjBmdw';
+  static const String _apiKey = 'AQ.Ab8RN6IsRY-q3q8glN8K-RY3DIuHy6aQrwf0TcuRjhENjLVYbA';
   late final GenerativeModel _model;
 
   GeminiService() {

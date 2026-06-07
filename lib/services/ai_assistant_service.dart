@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class AiAssistantService {
-  static const String _apiKey = 'AQ.Ab8RN6KmNSoIVj0_A96rkoH6GJOtgIRezdCqB-8Hp7AJAjBmdw';
+  static const String _apiKey = 'AQ.Ab8RN6IsRY-q3q8glN8K-RY3DIuHy6aQrwf0TcuRjhENjLVYbA';
   late final GenerativeModel _model;
 
   AiAssistantService() {
@@ -81,9 +81,21 @@ ${jsonEncode(reviewsData)}
 
       final content = [Content.text(prompt)];
       final response = await _model.generateContent(content);
-      final responseText = response.text ?? '[]';
+      String rawText = response.text ?? '[]';
       
-      String jsonStr = responseText.replaceAll('```json', '').replaceAll('```', '').trim();
+      String jsonStr = '[]';
+      if (rawText.contains('```json')) {
+        int start = rawText.indexOf('```json') + 7;
+        int end = rawText.indexOf('```', start);
+        if (end != -1) jsonStr = rawText.substring(start, end).trim();
+      } else {
+        int startIndex = rawText.indexOf('[');
+        int endIndex = rawText.lastIndexOf(']');
+        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+          jsonStr = rawText.substring(startIndex, endIndex + 1);
+        }
+      }
+
       List<dynamic> evaluations = jsonDecode(jsonStr);
 
       // Gắn thêm data gốc (comment, userName) vào để UI hiển thị cho tiện
@@ -106,7 +118,7 @@ ${jsonEncode(reviewsData)}
       return finalResult;
     } catch (e) {
       print('Lỗi AI: $e');
-      return null; // Null đại diện cho lỗi
+      throw Exception('Chi tiết lỗi AI: $e');
     }
   }
 
@@ -132,7 +144,19 @@ ${jsonEncode(dataList)}
 
       final content = [Content.text(prompt)];
       final response = await _model.generateContent(content);
-      String jsonStr = (response.text ?? '[]').replaceAll('```json', '').replaceAll('```', '').trim();
+      String rawText = response.text ?? '[]';
+      String jsonStr = '[]';
+      if (rawText.contains('```json')) {
+        int start = rawText.indexOf('```json') + 7;
+        int end = rawText.indexOf('```', start);
+        if (end != -1) jsonStr = rawText.substring(start, end).trim();
+      } else {
+        int startIndex = rawText.indexOf('[');
+        int endIndex = rawText.lastIndexOf(']');
+        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+          jsonStr = rawText.substring(startIndex, endIndex + 1);
+        }
+      }
       List<dynamic> evaluations = jsonDecode(jsonStr);
 
       List<Map<String, dynamic>> finalResult = [];
@@ -153,7 +177,7 @@ ${jsonEncode(dataList)}
       return finalResult;
     } catch (e) {
       print('Lỗi AI Booking: $e');
-      return null;
+      throw Exception('Chi tiết lỗi AI: $e');
     }
   }
 }

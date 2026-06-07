@@ -201,13 +201,20 @@ class _AdminScreenState extends State<AdminScreen> {
     Navigator.pop(context);
     _showAILoadingDialog('Đang kiểm duyệt và xử lý tự động...');
     final aiService = AiAssistantService();
-    final evaluations = await aiService.analyzeAllPendingReviews();
+    List<Map<String, dynamic>>? evaluations;
+    try {
+      evaluations = await aiService.analyzeAllPendingReviews();
+    } catch (e) {
+      Navigator.pop(context);
+      _showAIResultDialog('Lỗi', e.toString().replaceAll('Exception: ', ''));
+      return;
+    }
     
     if (evaluations == null) {
       Navigator.pop(context);
       _showAIResultDialog('Lỗi', 'Có lỗi xảy ra khi phân tích bằng AI.');
       return;
-    } 
+    }
     if (evaluations.isEmpty) {
       Navigator.pop(context);
       _showAIResultDialog('Tự động kiểm duyệt', 'Không có review nào đang chờ xử lý.');
@@ -248,7 +255,14 @@ class _AdminScreenState extends State<AdminScreen> {
     Navigator.pop(context);
     _showAILoadingDialog('Đang quét spam và duyệt đơn tự động...');
     final aiService = AiAssistantService();
-    final evaluations = await aiService.analyzeAllPendingBookings();
+    List<Map<String, dynamic>>? evaluations;
+    try {
+      evaluations = await aiService.analyzeAllPendingBookings();
+    } catch (e) {
+      Navigator.pop(context);
+      _showAIResultDialog('Lỗi', e.toString().replaceAll('Exception: ', ''));
+      return;
+    }
     
     if (evaluations == null) {
       Navigator.pop(context);
@@ -615,8 +629,6 @@ class _AdminScreenState extends State<AdminScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSearchBar(),
-                  const SizedBox(height: 16),
                   _buildSummaryGrid(),
                   const SizedBox(height: 16),
                   _buildRevenueChart(),
@@ -662,31 +674,6 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Tìm kiếm...',
-          hintStyle: const TextStyle(color: Colors.grey),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
-          suffixIcon: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(
-              '⌘K',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 16),
-            ),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
-    );
-  }
 
   Widget _buildSummaryGrid() {
     return GridView.count(

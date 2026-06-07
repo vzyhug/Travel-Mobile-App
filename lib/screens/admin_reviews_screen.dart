@@ -61,7 +61,7 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
             return Center(child: Text('Đã xảy ra lỗi: ${snapshot.error}'));
           }
 
-          final docs = snapshot.data?.docs ?? [];
+          var docs = snapshot.data?.docs ?? [];
 
           if (docs.isEmpty) {
             return Center(
@@ -78,6 +78,20 @@ class _AdminReviewsScreenState extends State<AdminReviewsScreen> {
               ),
             );
           }
+
+          // Sắp xếp: Mới nhất lên đầu
+          docs = docs.toList()..sort((a, b) {
+            final dataA = a.data() as Map<String, dynamic>;
+            final dataB = b.data() as Map<String, dynamic>;
+            
+            final timeAStr = dataA['createdAt'];
+            final timeBStr = dataB['createdAt'];
+            
+            DateTime timeA = timeAStr is Timestamp ? timeAStr.toDate() : (DateTime.tryParse(timeAStr?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0));
+            DateTime timeB = timeBStr is Timestamp ? timeBStr.toDate() : (DateTime.tryParse(timeBStr?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0));
+            
+            return timeB.compareTo(timeA);
+          });
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),

@@ -1,0 +1,11 @@
+{
+  "contents": [
+    {
+      "parts": [
+        {
+          "text": "Bạn là một AI kiểm duyệt. Hãy đánh giá: 'Khách sạn này quá tệ'. Trả về JSON."
+        }
+      ]
+    }
+  ]
+}

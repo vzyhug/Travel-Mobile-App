@@ -79,39 +79,63 @@ class _HotelPaymentScreenState extends State<HotelPaymentScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     final bookingId = DateTime.now().millisecondsSinceEpoch.toString();
-    // Tạo hóa đơn lưu vào LocalStorage
-    final booking = LocalBookingModel(
-      bookingId: bookingId,
-      tripId: widget.hotel.id,
-      // Ghép tên khách sạn và tên phòng để hiển thị cho rõ ràng
-      tripName: '${widget.hotel.name} (${widget.room.type})',
-      price: widget.room.price * numberOfNights,
-      location: widget.hotel.address,
-      imageUrl: widget.hotel.imageUrls.isNotEmpty ? widget.hotel.imageUrls[0] : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80',
-      bookedAt: DateTime.now(),
-    );
-
-    await _localStorageService.addBooking(booking);
 
     try {
       final email = await _localStorageService.getUserEmail();
-      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).set({
-        'bookingId': bookingId,
-        'userEmail': email ?? 'unknown',
-        'tripId': widget.hotel.id,
-        'tripName': '${widget.hotel.name} (${widget.room.type})',
-        'price': widget.room.price * numberOfNights,
-        'location': widget.hotel.address,
-        'imageUrl': booking.imageUrl,
-        'bookedAt': DateTime.now().toIso8601String(),
-        'status': 'Chờ duyệt',
-        'type': 'hotel',
-        'guestCount': numberOfGuests,
-        'nightCount': numberOfNights,
-        'customerName': nameController.text.trim(),
+      
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final roomRef = FirebaseFirestore.instance.collection('rooms').doc(widget.room.id);
+        final roomSnapshot = await transaction.get(roomRef);
+        
+        if (roomSnapshot.exists) {
+          final isAvailable = roomSnapshot.data()?['available'] ?? false;
+          if (!isAvailable) {
+            throw Exception('Phòng này vừa được người khác đặt. Vui lòng chọn phòng khác.');
+          }
+          // Chuyển trạng thái phòng thành hết phòng (unavailable)
+          transaction.update(roomRef, {'available': false});
+        }
+        
+        final bookingRef = FirebaseFirestore.instance.collection('bookings').doc(bookingId);
+        transaction.set(bookingRef, {
+          'bookingId': bookingId,
+          'userEmail': email ?? 'unknown',
+          'tripId': widget.hotel.id,
+          'tripName': '${widget.hotel.name} (${widget.room.type})',
+          'price': widget.room.price * numberOfNights,
+          'location': widget.hotel.address,
+          'imageUrl': widget.hotel.imageUrls.isNotEmpty ? widget.hotel.imageUrls[0] : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80',
+          'bookedAt': DateTime.now().toIso8601String(),
+          'status': 'Chờ duyệt',
+          'type': 'hotel',
+          'guestCount': numberOfGuests,
+          'nightCount': numberOfNights,
+          'customerName': nameController.text.trim(),
+        });
       });
+
+      // Nếu Transaction thành công, mới lưu vào LocalStorage
+      final booking = LocalBookingModel(
+        bookingId: bookingId,
+        tripId: widget.hotel.id,
+        tripName: '${widget.hotel.name} (${widget.room.type})',
+        price: widget.room.price * numberOfNights,
+        location: widget.hotel.address,
+        imageUrl: widget.hotel.imageUrls.isNotEmpty ? widget.hotel.imageUrls[0] : 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80',
+        bookedAt: DateTime.now(),
+      );
+      await _localStorageService.addBooking(booking);
+
     } catch (e) {
       debugPrint('Lỗi lưu Firestore: $e');
+      if (!mounted) return;
+      setState(() {
+        isConfirming = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+      return; // Dừng lại, không hiện thông báo thành công
     }
 
     if (!mounted) return;

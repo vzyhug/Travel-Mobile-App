@@ -23,11 +23,11 @@ class MyHttpOverrides extends HttpOverrides {
           (X509Certificate cert, String host, int port) {
             if (SecurityConfig.isMitMDefenseEnabled) {
               // Phòng thủ: Từ chối chứng chỉ không hợp lệ
-              print("🚨 [PHÒNG THỦ MitM] Từ chối chứng chỉ giả mạo từ \$host. Ngắt kết nối!");
+              print(" [PHÒNG THỦ MitM] Từ chối chứng chỉ giả mạo từ \$host. Ngắt kết nối!");
               return false;
             } else {
               // Tấn công: Chấp nhận mọi chứng chỉ
-              print("⚠️ [CẢNH BÁO MitM] Chấp nhận chứng chỉ giả mạo từ \$host.");
+              print(" [CẢNH BÁO MitM] Chấp nhận chứng chỉ giả mạo từ \$host.");
               return true;
             }
           };
@@ -72,9 +72,5 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(debugShowCheckedModeBanner: false, home: initialScreen);
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
-    );
   }
 }

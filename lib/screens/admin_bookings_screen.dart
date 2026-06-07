@@ -52,8 +52,34 @@ class AdminBookingsScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final docs = snapshot.data?.docs ?? [];
+          var docs = snapshot.data?.docs ?? [];
           if (docs.isEmpty) return const Center(child: Text('Chưa có đơn đặt nào trên hệ thống (Firestore).'));
+
+          // Sắp xếp: "Chờ duyệt" lên đầu, sau đó đến mới nhất
+          docs = docs.toList()..sort((a, b) {
+            final dataA = a.data() as Map<String, dynamic>;
+            final dataB = b.data() as Map<String, dynamic>;
+            
+            final statusA = dataA['status'] ?? 'Chờ duyệt';
+            final statusB = dataB['status'] ?? 'Chờ duyệt';
+            
+            int rank(String s) {
+              if (s == 'Chờ duyệt') return 0;
+              if (s == 'Đã duyệt') return 1;
+              return 2;
+            }
+            
+            int statusCmp = rank(statusA).compareTo(rank(statusB));
+            if (statusCmp != 0) return statusCmp;
+            
+            final timeAStr = dataA['bookedAt'] ?? dataA['timestamp'];
+            final timeBStr = dataB['bookedAt'] ?? dataB['timestamp'];
+            
+            DateTime timeA = timeAStr is Timestamp ? timeAStr.toDate() : (DateTime.tryParse(timeAStr?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0));
+            DateTime timeB = timeBStr is Timestamp ? timeBStr.toDate() : (DateTime.tryParse(timeBStr?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0));
+            
+            return timeB.compareTo(timeA);
+          });
 
           return ListView.builder(
             itemCount: docs.length,
